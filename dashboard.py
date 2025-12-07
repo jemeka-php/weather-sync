@@ -37,53 +37,133 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for better styling
+# Premium Modern UI Styling (Dark Mode)
 st.markdown(
     """
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        color: #2E7D32;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #2E7D32;
-    }
-    .risk-alert {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-    .forecast-card {
-        background-color: #ffffff;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .hourly-table-container {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr); /* 8 columns for 24 hours (3hr intervals, but showing all labels) */
-        text-align: center;
-        font-size: 0.8rem;
-        margin-top: 1rem;
-        border-top: 1px solid #ddd;
-        padding-top: 0.5rem;
-    }
-    .hourly-table-cell {
-        padding: 0.2rem 0;
-        border-right: 1px dotted #eee;
-    }
-    .hourly-table-cell:last-child {
-        border-right: none;
-    }
-</style>
-""",
+    <style>
+        /* Import Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        /* Main Container */
+        .stApp {
+            background-color: #0e1117;
+            color: #fafafa;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Sidebar */
+        [data-testid="stSidebar"] {
+            background-color: #161b22;
+            border-right: 1px solid #30363d;
+        }
+
+        /* Titles */
+        h1, h2, h3 {
+            color: #e6edf3 !important;
+            font-weight: 700;
+        }
+        
+        .main-header {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 1rem;
+        }
+
+        /* Cards / Metrics */
+        div[data-testid="stMetricValue"] {
+            font-size: 1.8rem;
+            color: #66bb6a;
+        }
+        
+        div[data-testid="metric-container"] {
+            background-color: #1f242d;
+            border: 1px solid #30363d;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        
+        div[data-testid="metric-container"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            border-color: #66bb6a;
+        }
+        
+        div[data-testid="stMetricLabel"] {
+            color: #b0b8c4;
+        }
+
+        /* Custom Cards */
+        .forecast-card {
+            background: #1f242d;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: #e6edf3;
+            transition: all 0.2s ease;
+        }
+        .forecast-card:hover {
+            border-color: #66bb6a;
+            transform: translateX(4px);
+        }
+
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: transparent;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            height: 50px;
+            white-space: pre-wrap;
+            background-color: #1f242d;
+            border-radius: 8px 8px 0px 0px;
+            gap: 1px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border: 1px solid #30363d;
+            border-bottom: none;
+            color: #b0b8c4;
+        }
+        
+        .stTabs [aria-selected="true"] {
+            background-color: #2E7D32;
+            color: white;
+            border: none;
+        }
+
+        /* Hourly Table */
+        .hourly-table-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            text-align: center;
+            background: #1f242d;
+            padding: 1rem 0;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            border: 1px solid #30363d;
+        }
+        .hourly-table-cell {
+            padding: 0.25rem;
+            font-size: 0.85rem;
+            color: #e6edf3;
+            font-weight: 500;
+        }
+        
+        /* Remove default Streamlit chrome but keep header for sidebar toggle if needed */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        /* header {visibility: hidden;}  <-- Commented out to allow sidebar toggle access if needed, 
+           but we are moving controls to main page anyway. */
+    </style>
+    """,
     unsafe_allow_html=True,
 )
 
@@ -580,18 +660,26 @@ st.markdown('<h1 class="main-header">🌾 Abia State Agricultural Decision Suppo
 st.markdown("**Real-time weather analytics and crop management advisory for agricultural zones**")
 st.markdown("---")
 
-# Sidebar
-st.sidebar.title("⚙️ Controls")
-unique_zones = sorted(df_raw["Zone"].unique())
-selected_zone = st.sidebar.selectbox("📍 Select Agricultural Zone:", unique_zones)
+# --- Navigation & Controls (Main Top Bar) ---
+# Create a container for controls to make them prominent
+st.markdown("""<div style="background-color: #161b22; padding: 1rem; border-radius: 10px; border: 1px solid #30363d; margin-bottom: 2rem;">""", unsafe_allow_html=True)
+col_nav1, col_nav2, col_nav3 = st.columns([2, 1, 1])
 
-# Date range filter
-st.sidebar.subheader("📅 Date Range")
-date_range = st.sidebar.radio(
-    "Select timeframe:",
-    ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Data"],
-    index=2,
-)
+with col_nav1:
+    st.markdown("### 📍 Location & Timeframe")
+    
+with col_nav2:
+    unique_zones = sorted(df_raw["Zone"].unique())
+    # Default to first one or preserve state if possible (Streamlit handles state auto)
+    selected_zone = st.selectbox("Select Agricultural Zone:", unique_zones)
+
+with col_nav3:
+    date_range = st.selectbox(
+        "Select Timeframe:",
+        ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Data"],
+        index=2,
+    )
+st.markdown("</div>", unsafe_allow_html=True)
 
 # Filter data based on selection
 df_zone = df_raw[df_raw["Zone"] == selected_zone].copy()
@@ -603,9 +691,8 @@ elif date_range == "Last 30 Days":
 elif date_range == "Last 90 Days":
     df_zone = df_zone.last("90D")
 
-st.sidebar.markdown("---")
-st.sidebar.info(f"📊 **Total Records:** {len(df_zone):,}")
-st.sidebar.info(f"📅 **Data Range:** {df_zone.index.min().strftime('%Y-%m-%d')} to {df_zone.index.max().strftime('%Y-%m-%d')}")
+# Removed sidebar info as it's cleaner without it, or move to bottom
+# st.sidebar.info(...) -> Removed
 
 # Tabs
 # Tabs
@@ -716,6 +803,51 @@ with tab1:
         )
 
         st.plotly_chart(fig_temp, use_container_width=True)
+
+        # Wind & Pressure Analysis
+        st.subheader("🌬️ Wind & Atmosphere Analysis")
+        col_w1, col_w2 = st.columns(2)
+        
+        with col_w1:
+            # Wind Rose (Polar Scatter of recent 24h)
+            st.markdown("**Wind Direction (Last 24h)**")
+            
+            # Filter last 24h
+            df_wind = df_zone.tail(24)
+            
+            fig_wind = go.Figure()
+            fig_wind.add_trace(go.Scatterpolar(
+                r=df_wind["Wind_Speed"],
+                theta=df_wind["Wind_Direction"],
+                mode='markers',
+                marker=dict(
+                    color=df_wind["Wind_Speed"],
+                    colorscale='Viridis',
+                    size=10,
+                    showscale=True,
+                    colorbar=dict(title="Speed (m/s)")
+                ),
+                name='Wind'
+            ))
+            
+            fig_wind.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, df_wind["Wind_Speed"].max() + 2]),
+                    angularaxis=dict(direction="clockwise")
+                ),
+                showlegend=False,
+                height=350,
+                margin=dict(l=40, r=40, t=20, b=20)
+            )
+            st.plotly_chart(fig_wind, use_container_width=True)
+
+        with col_w2:
+            # Pressure Trend
+            st.markdown("**Atmospheric Pressure Trend**")
+            fig_press = px.line(df_zone.tail(24), x=df_zone.tail(24).index, y="Pressure", markers=True)
+            fig_press.update_traces(line_color="#4FC3F7")
+            fig_press.update_layout(height=350, xaxis_title="Time", yaxis_title="hPa")
+            st.plotly_chart(fig_press, use_container_width=True)
 
 # --- TAB 2: Weather Forecast (Enhanced to match screenshot) ---
 with tab2:
@@ -908,6 +1040,44 @@ with tab4:
 
         fig_rain.update_layout(xaxis_title="Date", yaxis_title="Rainfall (mm)")
         st.plotly_chart(fig_rain, use_container_width=True)
+
+        # Gauge Chart for Current Status
+        st.subheader("⏱️ Current Risk Monitor")
+        
+        # Determine gauge color based on risk
+        gauge_color = "#4caf50" # Green
+        if latest_risk['Rain_7D_Sum'] < DROUGHT_THRESHOLD:
+            gauge_color = "#ef5350" # Red
+        elif latest_risk['Rain_7D_Sum'] > WET_THRESHOLD:
+            gauge_color = "#42a5f5" # Blue
+            
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number+delta",
+            value = latest_risk['Rain_7D_Sum'],
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "7-Day Cumulative Rainfall (mm)", 'font': {'size': 20}},
+            delta = {'reference': DROUGHT_THRESHOLD, 'increasing': {'color': "blue"}, 'decreasing': {'color': "red"}},
+            gauge = {
+                'axis': {'range': [None, 200], 'tickwidth': 1, 'tickcolor': "white"},
+                'bar': {'color': gauge_color},
+                'bgcolor': "rgba(0,0,0,0)",
+                'borderwidth': 2,
+                'bordercolor': "#333",
+                'steps': [
+                    {'range': [0, DROUGHT_THRESHOLD], 'color': 'rgba(239, 83, 80, 0.3)'},
+                    {'range': [DROUGHT_THRESHOLD, WET_THRESHOLD], 'color': 'rgba(102, 187, 106, 0.3)'},
+                    {'range': [WET_THRESHOLD, 200], 'color': 'rgba(66, 165, 245, 0.3)'}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': DROUGHT_THRESHOLD
+                }
+            }
+        ))
+        
+        fig_gauge.update_layout(height=300)
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
         # Rolling sum chart
         fig_rolling = px.line(

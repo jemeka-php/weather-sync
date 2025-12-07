@@ -46,7 +46,7 @@ def fetch_historical_data(zone_name, lat, lon):
             print(f"Warning: No hourly data found for {zone_name}", flush=True)
             return pd.DataFrame()
 
-        # Create DataFrame
+        # Create Initial DataFrame (Extract)
         df = pd.DataFrame({
             "Timestamp": pd.to_datetime(hourly["time"]),
             "Zone": zone_name,
@@ -60,18 +60,81 @@ def fetch_historical_data(zone_name, lat, lon):
             "Wind_Direction": hourly["wind_direction_10m"],
             "Cloudiness": hourly["cloud_cover"],
             "Precipitation_1h": hourly["rain"],
-            "Precipitation_3h": 0.0, # Not available directly in this format easily without resampling
-            "Weather_Condition": "Unknown", # Historical API doesn't give text description easily
+            "Precipitation_3h": 0.0, 
+            "Weather_Condition": "Unknown",
             "Weather_Description": "Historical Data",
-            "Visibility": 10.0 # Default
+            "Visibility": 10.0
         })
+
+        # --- Transform & Clean (ETL Phase) ---
+        df = clean_and_transform_data(df)
         
-        print(f"  -> Fetched {len(df)} records for {zone_name}", flush=True)
+        print(f"  -> Fetched & Cleaned {len(df)} records for {zone_name}", flush=True)
         return df
     
     except Exception as e:
         print(f"Error fetching data for {zone_name}: {e}", flush=True)
         return pd.DataFrame()
+
+def clean_and_transform_data(df):
+    """
+    Robust ETL Cleaning function.
+    - Interpolates missing values.
+    - Caps outliers to physical limits.
+    - Ensures consistency.
+    """
+    if df.empty:
+        return df
+
+    # 1. Deduplication
+    df.drop_duplicates(subset=["Timestamp"], keep="last", inplace=True)
+
+    # 2. Resampling & Filling (Handling Gaps)
+    # Ensure a complete hourly index
+    df = df.set_index("Timestamp").sort_index()
+    # Reindex to full range to find gaps
+    full_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="H")
+    df = df.reindex(full_range)
+    
+    # Forward fill non-numeric static columns (Zone)
+    df["Zone"] = df["Zone"].ffill().bfill()
+    df["Weather_Condition"] = df["Weather_Condition"].fillna("Unknown")
+    df["Weather_Description"] = df["Weather_Description"].fillna("Interpolated")
+
+    # Interpolate numeric linear data (Temp, Pressure)
+    numeric_cols = ["T_current", "T_min", "T_max", "Feels_Like", "Pressure", "Visibility"]
+    for col in numeric_cols:
+         if col in df.columns:
+             df[col] = df[col].interpolate(method="linear", limit=24) # Limit interpolation to 24h gaps
+
+    # Safe fill for variable data (Rain, Wind) - Interpolation might create rain where there is none?
+    # Wind/Humidity typically usually safe to interpolate linearly for short gaps
+    df["Humidity"] = df["Humidity"].interpolate(method="linear", limit=24)
+    df["Wind_Speed"] = df["Wind_Speed"].interpolate(method="linear", limit=24)
+    df["Cloudiness"] = df["Cloudiness"].interpolate(method="linear", limit=24)
+    
+    # Rain: fill gaps with 0.0 (Conservative assumption)
+    df["Precipitation_1h"] = df["Precipitation_1h"].fillna(0.0)
+    df["Precipitation_3h"] = df["Precipitation_3h"].fillna(0.0)
+
+    # 3. Outlier Handling & Physical Consistency
+    # Humidity 0-100
+    if "Humidity" in df.columns:
+        df["Humidity"] = df["Humidity"].clip(lower=0.0, upper=100.0)
+    
+    # Cloudiness 0-100
+    if "Cloudiness" in df.columns:
+        df["Cloudiness"] = df["Cloudiness"].clip(lower=0.0, upper=100.0)
+
+    # Negative Rain -> 0
+    if "Precipitation_1h" in df.columns:
+        df["Precipitation_1h"] = df["Precipitation_1h"].clip(lower=0.0)
+
+    # Reset index to get Timestamp back as column
+    df.index.name = "Timestamp"
+    df = df.reset_index()
+    
+    return df
 
 def main():
     print("Starting historical data fetch...", flush=True)
