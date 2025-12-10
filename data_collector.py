@@ -261,7 +261,7 @@ class WeatherDataCollector:
         except Exception as e:
             logger.error(f"Error creating backup: {e}")
 
-    def fetch_and_store_weather(self) -> None:
+    def fetch_and_store_weather(self) -> bool:
         """Main function to fetch and store weather data for all zones."""
         logger.info("=" * 60)
         logger.info(f"Starting data collection at {datetime.now()}")
@@ -279,8 +279,10 @@ class WeatherDataCollector:
 
         if success:
             logger.info(f"Data collection completed successfully")
+            return True
         else:
             logger.warning(f"Data collection completed with errors")
+            return False
 
         logger.info("=" * 60)
 
@@ -317,7 +319,11 @@ if __name__ == "__main__":
         if "--run-once" in sys.argv:
             # Run one-off collection (useful for cron jobs/GitHub Actions)
             collector = WeatherDataCollector()
-            collector.fetch_and_store_weather()
+            # Fetch data and exit with 0 if success, 1 if failure
+            success = collector.fetch_and_store_weather()
+            if not success:
+               logger.error("Run-once collection failed")
+               sys.exit(1)
         else:
             # Run as long-running scheduler
             run_scheduler()

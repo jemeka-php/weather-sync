@@ -8,8 +8,9 @@ on:
 
 jobs:
   collect-and-sync:
-    runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -30,3 +31,11 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       run: python data_collector.py --run-once
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Weather Bot'
+        git config --global user.email 'bot@noreply.github.com'
+        git add data/abia_weather_archive.csv
+        git commit -m "Update weather data [skip ci]" || exit 0
+        git push

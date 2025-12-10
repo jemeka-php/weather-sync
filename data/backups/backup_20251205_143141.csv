@@ -1,0 +1,7 @@
+Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
+2025-12-05 14:28:41,Aba,30.71,30.71,30.71,34.48,61,1009,1.99,190,100,0.0,0.0,Clouds,overcast clouds,10.0
+2025-12-05 14:28:48,Umuahia,30.47,30.47,30.47,33.75,60,1008,1.81,171,100,0.0,0.0,Clouds,overcast clouds,10.0
+2025-12-05 14:28:53,Bende,32.23,32.23,32.23,36.12,55,1008,1.91,188,100,0.0,0.0,Clouds,overcast clouds,10.0
+2025-12-05 14:31:14,Aba,30.71,30.71,30.71,34.48,61,1009,1.99,190,100,0.0,0.0,Clouds,overcast clouds,10.0
+2025-12-05 14:31:19,Umuahia,30.47,30.47,30.47,33.75,60,1008,1.81,171,100,0.0,0.0,Clouds,overcast clouds,10.0
+2025-12-05 14:31:39,Bende,32.23,32.23,32.23,36.12,55,1008,1.91,188,100,0.0,0.0,Clouds,overcast clouds,10.0

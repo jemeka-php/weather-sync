@@ -3,6 +3,6 @@
 __pycache__/
 .DS_Store
 .github/workflows/weather_sync_hardcoded.yml
-data/
+!data/abia_weather_archive.csv
 logs/
 *.pyc

@@ -15,7 +15,6 @@ except ImportError:
     create_client = None
 from config import (
     DATA_ARCHIVE_FILE,
-    CROP_PROFILES,
     DROUGHT_THRESHOLD,
     WET_THRESHOLD,
     EXTREME_TEMP_HIGH,
@@ -28,6 +27,23 @@ from config import (
     SUPABASE_URL,
     SUPABASE_KEY,
 )
+
+# Import seasonal crop recommendation system
+from seasonal_crops import SEASONAL_CROPS, get_current_season, get_crops_for_month, get_optimal_crops_for_month
+from crop_recommender import get_crop_recommendations, get_planting_calendar, format_recommendation_display
+from tts_utils import text_to_audio, autoplay_audio
+from summary_generator import (
+    generate_overview_summary,
+    generate_temp_trend_summary,
+    generate_wind_summary,
+    generate_hourly_forecast_summary,
+    generate_daily_forecast_summary,
+    generate_drought_risk_summary,
+    generate_crop_plan_summary
+)
+from auth import AuthManager
+from sms_service import SMSService
+from email_service import EmailService
 
 # Set page configuration
 st.set_page_config(
@@ -303,19 +319,20 @@ def get_weather_emoji(weather_condition):
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def load_data():
-    """Loads, cleans, and preprocesses the archived weather data."""
-    # Try Supabase first
+    """Loads, cleans, and preprocesses weather data from both Supabase and local archive."""
+    df_supabase = pd.DataFrame()
+    df_local = pd.DataFrame()
+
+    # 1. Try Loading from Supabase
     if SUPABASE_URL and SUPABASE_KEY and create_client:
         try:
             supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
             response = supabase.table("weather_data").select("*").execute()
             
             if response.data:
-                df = pd.DataFrame(response.data)
+                df_supabase = pd.DataFrame(response.data)
                 
-                # Column mapping (Supabase snake_case -> Dashboard Title Case)
-                # Map only if necessary. If user created table with Title Case, this might fail or be redundant.
-                # Assuming standard Supabase lowercase, we map common columns.
+                # Column mapping
                 column_map = {
                     "timestamp": "Timestamp",
                     "zone": "Zone",
@@ -334,76 +351,107 @@ def load_data():
                     "weather_description": "Weather_Description",
                     "visibility": "Visibility"
                 }
+                df_supabase.rename(columns=column_map, inplace=True)
                 
-                # Rename columns that match
-                df.rename(columns=column_map, inplace=True)
-                
-                # If specific columns like T_current are missing (maybe they are already Title Case in DB), check and keep original
-                
-                # Core cleaning
-                df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-                df.set_index("Timestamp", inplace=True)
-                
-                # Ensure numeric columns
-                numeric_cols = [
-                    "T_current", "T_min", "T_max", "Humidity", 
-                    "Precipitation_1h", "Precipitation_3h"
-                ]
-                for col in numeric_cols:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors="coerce")
-                        
-                df.dropna(subset=["T_min", "T_max"], inplace=True)
-                df.sort_index(inplace=True)
-                
-                # Add source indicator for debugging (optional, can remove)
-                # st.toast("Loaded data from Supabase DB") 
-                
-                return df
-                
+                # Check for critical column "Timestamp"
+                if "Timestamp" in df_supabase.columns:
+                     df_supabase["Timestamp"] = pd.to_datetime(df_supabase["Timestamp"])
+                     # Ensure timezone-naive for compatibility
+                     if pd.api.types.is_datetime64_any_dtype(df_supabase["Timestamp"]):
+                        # Handle potential mixed bag or just convert
+                        # If it's already naive, this might error if we use tz_convert, so use tz_localize(None)
+                        # But first ensure it is dt accessible
+                        if df_supabase["Timestamp"].dt.tz is not None:
+                             df_supabase["Timestamp"] = df_supabase["Timestamp"].dt.tz_localize(None)
+                     
+                     df_supabase.set_index("Timestamp", inplace=True)
+                else:
+                    st.warning("⚠️ Supabase data missing 'Timestamp' column.")
+                    df_supabase = pd.DataFrame() # Invalidate if structure is wrong
+
         except Exception as e:
-            st.warning(f"⚠️ Could not load from Supabase ({e}). Falling back to local archive.")
-    
-    # Fallback to local CSV
-    if not os.path.exists(DATA_ARCHIVE_FILE):
-        st.error(
-            f"⚠️ Data archive '{DATA_ARCHIVE_FILE}' not found. "
-            "Please run data_collector.py first to generate data."
-        )
+            st.warning(f"⚠️ Could not load from Supabase: {e}")
+
+    # 2. Try Loading from Local CSV
+    if os.path.exists(DATA_ARCHIVE_FILE):
+        try:
+            df_local = pd.read_csv(DATA_ARCHIVE_FILE)
+            if "Timestamp" in df_local.columns:
+                df_local["Timestamp"] = pd.to_datetime(df_local["Timestamp"])
+                # Ensure timezone-naive for compatibility
+                if df_local["Timestamp"].dt.tz is not None:
+                     df_local["Timestamp"] = df_local["Timestamp"].dt.tz_localize(None)
+                
+                df_local.set_index("Timestamp", inplace=True)
+        except Exception as e:
+            st.error(f"❌ Error loading local data: {e}")
+
+    # 3. Combine Data sources
+    if df_supabase.empty and df_local.empty:
+        # Fallback: Generate Sample Data for Demo purposes if no source available
+        if not os.path.exists(DATA_ARCHIVE_FILE):
+             st.warning(
+                "⚠️ No live or archived data found (Supabase/Local). Generating SAMPLE data for demonstration."
+            )
+             # Generate 90 days of sample data
+             dates = pd.date_range(end=datetime.now(), periods=24*90, freq="h")
+             
+             sample_data = []
+             for zone in AGRICULTURAL_ZONES.keys():
+                 for date in dates:
+                     # Simple synthetic weather
+                     hour = date.hour
+                     base_temp = 25 + (5 * np.sin((hour - 6) * np.pi / 12))  # Daily cycle
+                     noise = np.random.normal(0, 2)
+                     
+                     sample_data.append({
+                         "Timestamp": date,
+                         "Zone": zone,
+                         "T_current": base_temp + noise,
+                         "T_min": base_temp - 2,
+                         "T_max": base_temp + 2,
+                         "Humidity": 60 + (20 * np.cos((hour - 6) * np.pi / 12)) + noise,
+                         "Precipitation_1h": max(0, np.random.normal(0, 1) if np.random.random() > 0.8 else 0),
+                         "Wind_Speed": max(0, 5 + np.random.normal(0, 2)),
+                         "Weather_Condition": "Clouds" if np.random.random() > 0.5 else "Clear"
+                     })
+                     
+             df_sample = pd.DataFrame(sample_data)
+             df_sample.set_index("Timestamp", inplace=True)
+             return df_sample
+
         return pd.DataFrame()
 
+    df_combined = pd.concat([df_supabase, df_local])
+
+    # 4. Clean and Deduplicate
     try:
-        df = pd.read_csv(DATA_ARCHIVE_FILE)
-
-        # Core cleaning
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-        df.set_index("Timestamp", inplace=True)
-
-        # Ensure numeric columns
+        # Ensure consistent schema before processing
         numeric_cols = [
-            "T_current",
-            "T_min",
-            "T_max",
-            "Humidity",
-            "Precipitation_1h",
-            "Precipitation_3h",
+            "T_current", "T_min", "T_max", "Humidity", 
+            "Precipitation_1h", "Precipitation_3h"
         ]
+        
         for col in numeric_cols:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
-
+            if col in df_combined.columns:
+                df_combined[col] = pd.to_numeric(df_combined[col], errors="coerce")
+        
         # Drop rows with missing critical data
-        df.dropna(subset=["T_min", "T_max"], inplace=True)
-
-        # Sort by timestamp
-        df.sort_index(inplace=True)
-
-        return df
+        df_combined.dropna(subset=["T_min", "T_max"], inplace=True)
+        
+        # Remove duplicates (preferring local or simply latest)
+        # Reset index to deduplicate by Timestamp + Zone
+        df_combined.reset_index(inplace=True)
+        df_combined.drop_duplicates(subset=["Timestamp", "Zone"], keep="last", inplace=True)
+        df_combined.set_index("Timestamp", inplace=True)
+        
+        df_combined.sort_index(inplace=True)
+        
+        return df_combined
 
     except Exception as e:
-        st.error(f"❌ Error loading data: {e}")
+        st.error(f"❌ Error processing combined data: {e}")
         return pd.DataFrame()
-
 
 def calculate_daily_aggregates(df_zone):
     """Calculate daily aggregates from hourly data."""
@@ -468,66 +516,6 @@ def identify_wet_dry_periods(df_zone, window=7):
     return df_risk
 
 
-def suggest_crops(df_zone):
-    """Compares zone climate profile to crop requirements."""
-    daily = calculate_daily_aggregates(df_zone)
-
-    if daily.empty:
-        return pd.DataFrame()
-
-    # Calculate climate metrics
-    mean_tmin = daily["T_min"].mean()
-    mean_tmax = daily["T_max"].mean()
-
-    # Estimate annual rainfall (sum of last 365 days)
-    last_year_rain = daily["Daily_Precipitation"].tail(365).sum()
-
-    suggestions = []
-
-    for crop, reqs in CROP_PROFILES.items():
-        reasons = []
-        suitability_score = 0
-
-        # Temperature check
-        if mean_tmin >= reqs["T_base"]:
-            reasons.append(f"✓ Meets T_base ({reqs['T_base']:.1f}°C)")
-            suitability_score += 1
-
-        # Optimal temperature range
-        if (
-            "T_optimal_min" in reqs
-            and reqs["T_optimal_min"] <= mean_tmax <= reqs["T_optimal_max"]
-        ):
-            reasons.append("✓ Within optimal temperature range")
-            suitability_score += 1
-
-        # Rainfall check
-        if reqs["Rain_Annual_Min"] <= last_year_rain <= reqs["Rain_Annual_Max"]:
-            reasons.append("✓ Rainfall within ideal range")
-            suitability_score += 1
-
-        # Determine suitability
-        if suitability_score >= 3:
-            suitability = "🟢 Highly Suitable"
-        elif suitability_score == 2:
-            suitability = "🟡 Moderately Suitable"
-        else:
-            suitability = "🔴 Not Suitable"
-
-        suggestions.append(
-            {
-                "Crop": crop,
-                "Suitability": suitability,
-                "Mean T_min": f"{mean_tmin:.1f}°C",
-                "Mean T_max": f"{mean_tmax:.1f}°C",
-                "Annual Rain": f"{last_year_rain:.0f} mm",
-                "Notes": " | ".join(reasons) if reasons else "Does not meet requirements",
-            }
-        )
-
-    return pd.DataFrame(suggestions)
-
-
 def calculate_statistics(df_zone):
     """Calculate comprehensive statistics for the zone."""
     daily = calculate_daily_aggregates(df_zone)
@@ -560,6 +548,15 @@ def calculate_annual_metrics(df_zone):
         }
     )
     annual.index = annual.index.year
+    
+    # Filter out years with insufficient data (less than 6 months = 180 days)
+    # Count number of days per year in the original data
+    days_per_year = daily.groupby(daily.index.year).size()
+    
+    # Only keep years with at least 180 days of data
+    valid_years = days_per_year[days_per_year >= 180].index
+    annual = annual[annual.index.isin(valid_years)]
+    
     return annual
 
 
@@ -571,11 +568,19 @@ def calculate_planting_onset(df_zone):
     daily = calculate_daily_aggregates(df_zone)
     if daily.empty:
         return pd.DataFrame()
+    
+    # Filter out years with insufficient data (less than 6 months = 180 days)
+    days_per_year = daily.groupby(daily.index.year).size()
+    valid_years = days_per_year[days_per_year >= 180].index
         
     onsets = []
     years = daily.index.year.unique()
     
     for year in years:
+        # Skip years with insufficient data
+        if year not in valid_years:
+            continue
+            
         # Filter for planting window (March - June)
         start_date = pd.Timestamp(f"{year}-03-01")
         if daily.index.tz is not None:
@@ -587,7 +592,7 @@ def calculate_planting_onset(df_zone):
         # Rolling 3-day rainfall
         season_data["Rain_3D"] = season_data["Daily_Precipitation"].rolling(3).sum()
         
-        # Find first occurrence > 20mm
+        # Find first occurrence >= 20mm
         onset_dates = season_data[season_data["Rain_3D"] >= 20].index
         
         if not onset_dates.empty:
@@ -611,6 +616,14 @@ def calculate_drought_frequency_yearly(df_zone):
     # Group by year
     yearly_droughts = drought_days.resample("Y").size()
     yearly_droughts.index = yearly_droughts.index.year
+    
+    # Filter out years with insufficient data (less than 6 months = 180 days)
+    # Count total days per year in original data
+    daily = calculate_daily_aggregates(df_zone)
+    if not daily.empty:
+        days_per_year = daily.groupby(daily.index.year).size()
+        valid_years = days_per_year[days_per_year >= 180].index
+        yearly_droughts = yearly_droughts[yearly_droughts.index.isin(valid_years)]
     
     return pd.DataFrame({"Drought_Days": yearly_droughts})
 
@@ -649,35 +662,169 @@ def calculate_historical_seasonality(df_zone):
 
 # --- Main Dashboard ---
 
+# Initialize Auth
+auth = AuthManager()
+
+# Session State for User
+if "user" not in st.session_state:
+    st.session_state["user"] = None
+
+# --- Authentication Flow ---
+if not st.session_state["user"]:
+    col1, col2 = st.columns([1, 2]) # Adjust layout as needed, maybe centered
+
+    with col2:
+        st.title("🌾 Abia State ADSS")
+        st.subheader("Login or Sign Up to access the dashboard.")
+        
+        auth_tab1, auth_tab2 = st.tabs(["Login", "Sign Up"])
+        
+        with auth_tab1:
+            with st.form("login_form"):
+                email = st.text_input("Email")
+                password = st.text_input("Password", type="password")
+                submit = st.form_submit_button("Login")
+                
+                if submit:
+                    result = auth.sign_in(email, password)
+                    if result.get("success"):
+                        st.session_state["user"] = result["user"]
+                        st.success("Login successful!")
+                        st.rerun()
+                    else:
+                        st.error(result.get("error"))
+        
+        with auth_tab2:
+            with st.form("signup_form"):
+                new_email = st.text_input("Email")
+                new_password = st.text_input("Password", type="password")
+                # confirm_password = st.text_input("Confirm Password", type="password") # Optional
+                submit_signup = st.form_submit_button("Sign Up")
+                
+                if submit_signup:
+                    result = auth.sign_up(new_email, new_password)
+                    if result.get("success"):
+                         st.success(result["message"])
+                    else:
+                        st.error(result.get("error"))
+
+    st.stop() # Stop execution if not logged in
+
+# --- LOGOUT BUTTON (Sidebar) ---
+with st.sidebar:
+    # st.sidebar is accessible anywhere
+    st.markdown(f"**User:** {st.session_state['user'].email if hasattr(st.session_state['user'], 'email') else 'Logged In'}")
+    
+    with st.expander("📱 SMS & 📧 Email Alerts"):
+        # SMS
+        st.caption("SMS Setup")
+        sms_service = SMSService()
+        phone_number = st.text_input("Phone Number", key="user_phone", placeholder="234...")
+        
+        # Email
+        st.caption("Email Setup")
+        email_service = EmailService()
+        email_address = st.text_input("Email Address", key="user_email_alert", placeholder="you@example.com")
+
+        if st.button("Send Test Alerts"):
+            # Test SMS
+            if phone_number:
+                with st.spinner("Sending Test SMS..."):
+                    res = sms_service.send_alert(phone_number, "Test SMS from Abia ADSS.")
+                    if res.get("success"):
+                        st.success("✅ SMS Sent!")
+                    else:
+                        st.error(f"❌ SMS Failed: {res.get('error')}")
+            
+            # Test Email
+            if email_address:
+                with st.spinner("Sending Test Email..."):
+                    res = email_service.send_alert(email_address, "Test Email from Abia ADSS", "This is a test email alert.")
+                    if res.get("success"):
+                         st.success("✅ Email Sent!")
+                    else:
+                        st.error(f"❌ Email Failed: {res.get('error')}")
+
+    if st.button("Logout", key="logout_btn"):
+        auth.sign_out()
+        st.session_state["user"] = None
+        st.rerun()
+    st.markdown("---")
+
+
 # Load data
 df_raw = load_data()
 
 if df_raw.empty:
     st.stop()
 
-# Header
-st.markdown('<h1 class="main-header">🌾 Abia State Agricultural Decision Support System</h1>', unsafe_allow_html=True)
-st.markdown("**Real-time weather analytics and crop management advisory for agricultural zones**")
+# --- HEADER ---
+st.markdown("""
+    <style>
+    .main-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .subtitle {
+        font-size: 1.3rem;
+        text-align: center;
+        color: #A0A0A0;
+        margin-bottom: 2rem;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+    }
+    </style>
+    <h1 class="main-title">🌾 Abia State Agricultural Decision Support System</h1>
+    <p class="subtitle">Real-time weather analytics and crop management advisory for agricultural zones</p>
+""", unsafe_allow_html=True)
+
+# --- Sidebar Configuration ---
+with st.sidebar:
+    st.image("https://img.icons8.com/color/96/000000/tractor.png", width=50)
+    st.title("Agro-Manager")
+    
+    st.markdown("---")
+
+# Audio Welcome
+welcome_text = "Welcome to the Abia State Agricultural System. I can help you plan your farm activities."
+if st.button("🔊 Read Welcome Message"):
+    audio = text_to_audio(welcome_text)
+    autoplay_audio(audio)
+
 st.markdown("---")
 
 # --- Navigation & Controls (Main Top Bar) ---
 # Create a container for controls to make them prominent
 st.markdown("""<div style="background-color: #161b22; padding: 1rem; border-radius: 10px; border: 1px solid #30363d; margin-bottom: 2rem;">""", unsafe_allow_html=True)
+
 col_nav1, col_nav2, col_nav3 = st.columns([2, 1, 1])
 
 with col_nav1:
-    st.markdown("### 📍 Location & Timeframe")
-    
+    st.markdown("### 📍 Weather Station")
+    st.caption("Select your zone below") 
+    # Language selector removed from here (moved to sidebar)
+
 with col_nav2:
     unique_zones = sorted(df_raw["Zone"].unique())
-    # Default to first one or preserve state if possible (Streamlit handles state auto)
-    selected_zone = st.selectbox("Select Agricultural Zone:", unique_zones)
+    # Use session state key to preserve selection
+    selected_zone = st.selectbox(
+        "Select Agricultural Zone:", 
+        unique_zones,
+        key="selected_zone"
+    )
 
 with col_nav3:
     date_range = st.selectbox(
         "Select Timeframe:",
         ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Data"],
         index=2,
+        key="date_range"
     )
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -696,13 +843,12 @@ elif date_range == "Last 90 Days":
 
 # Tabs
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     [
         "📊 Overview & Trends",
         "🔮 Weather Forecast",
         "📜 Historical Trends",
         "💧 Risk Analysis",
-        "🌱 GDD Tracking",
         "🗓️ Crop Planning",
         "📁 Data Archive",
     ]
@@ -711,6 +857,61 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
 # --- TAB 1: Overview & Trends (Logic is complete) ---
 with tab1:
     st.header(f"📊 Weather Overview for {selected_zone}")
+    
+    # Farmer-friendly introduction
+    st.info("👨‍🌾 **What This Shows:** Current weather conditions and recent trends in your area. Use this to plan daily farm activities like irrigation, spraying, or harvesting.")
+
+    if not df_zone.empty:
+        latest = df_zone.iloc[-1]
+        
+        # Construct summary text
+        temp_status = "hot" if latest['T_current'] > 30 else "mild"
+        rain_status = "raining" if latest.get("Precipitation_1h", 0) > 0 else "dry"
+        
+        # Helper to get full summary
+        def get_summary():
+            return generate_overview_summary(selected_zone, latest, calculate_statistics(df_zone))
+
+        col_audio, col_sms, col_email = st.columns([1, 1, 1])
+        with col_audio:
+            if st.button("🔊 Listen"):
+                summary_text = get_summary()
+                audio = text_to_audio(summary_text)
+                autoplay_audio(audio)
+        
+        with col_sms:
+            if st.button("📱 SMS Summary"):
+                phone = st.session_state.get("user_phone")
+                if not phone:
+                     st.error("Set phone in Sidebar.")
+                else:
+                    with st.spinner("Sending SMS..."):
+                        sms_msg = get_summary()
+                        sms_svc = SMSService()
+                        res = sms_svc.send_alert(phone, sms_msg)
+                        if res.get("success"):
+                            st.success("✅ SMS Sent!")
+                        else:
+                            st.error(f"❌ SMS Failed: {res.get('error')}")
+
+        with col_email:
+             if st.button("📧 Email Summary"):
+                email_addr = st.session_state.get("user_email_alert")
+                if not email_addr:
+                     st.error("Set email in Sidebar.")
+                else:
+                    with st.spinner("Sending Email..."):
+                        email_msg = get_summary()
+                        email_svc = EmailService()
+                        res = email_svc.send_alert(
+                            email_addr, 
+                            f"Abia ADSS Weather Update: {selected_zone}", 
+                            email_msg
+                        )
+                        if res.get("success"):
+                            st.success("✅ Email Sent!")
+                        else:
+                            st.error(f"❌ Email Failed: {res.get('error')}")
 
     if df_zone.empty:
         st.warning("No data available for the selected zone and timeframe.")
@@ -721,22 +922,68 @@ with tab1:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
+            temp_current = latest['T_current']
             st.metric(
                 "🌡️ Current Temperature",
-                f"{latest['T_current']:.1f} °C",
-                delta=f"{latest['T_current'] - df_zone['T_current'].mean():.1f}°C vs avg",
+                f"{temp_current:.1f} °C",
+                delta=f"{temp_current - df_zone['T_current'].mean():.1f}°C vs avg",
             )
+            # Dynamic explanation based on temperature value
+            if temp_current > 35:
+                st.warning("⚠️ **Very hot!** Heat stress risk for crops. Increase watering and provide shade if possible.")
+            elif temp_current > 30:
+                st.info("☀️ **Hot weather.** Good for heat-loving crops. Ensure adequate irrigation.")
+            elif temp_current >= 20:
+                st.success("✅ **Ideal temperature** for most crops. Good growing conditions.")
+            elif temp_current >= 15:
+                st.info("🌤️ **Mild weather.** Suitable for cool-season crops.")
+            else:
+                st.warning("❄️ **Cold weather.** Risk of frost damage. Protect sensitive crops.")
 
         with col2:
-            st.metric("💧 Humidity", f"{latest['Humidity']:.0f}%")
+            humidity = latest['Humidity']
+            st.metric("💧 Humidity", f"{humidity:.0f}%")
+            # Dynamic explanation based on humidity value
+            if humidity > 80:
+                st.warning("⚠️ **High humidity.** Increased risk of fungal diseases. Improve air circulation.")
+            elif humidity >= 60:
+                st.success("✅ **Good humidity** for most crops. Comfortable growing conditions.")
+            elif humidity >= 40:
+                st.info("🌤️ **Moderate humidity.** Monitor soil moisture regularly.")
+            else:
+                st.warning("🏜️ **Low humidity.** Plants may need more frequent watering.")
 
         with col3:
             rain_value = latest.get("Precipitation_1h", 0.0)
             st.metric("🌧️ Last Hour Rain", f"{rain_value:.1f} mm")
+            # Dynamic explanation based on rainfall
+            if rain_value > 10:
+                st.warning("🌧️ **Heavy rain!** Delay field work. Check for waterlogging.")
+            elif rain_value > 2:
+                st.info("🌦️ **Moderate rain.** Good for crops. Avoid spraying pesticides.")
+            elif rain_value > 0:
+                st.success("💧 **Light rain.** Beneficial for crops. Reduces irrigation needs.")
+            else:
+                # Check recent rainfall pattern
+                recent_rain = df_zone.tail(24)["Precipitation_1h"].sum()
+                if recent_rain < 1:
+                    st.info("☀️ **No recent rain.** Monitor soil moisture and irrigate if needed.")
+                else:
+                    st.success("✅ **Dry now** but recent rain was good. Soil should have moisture.")
 
         with col4:
             if "Wind_Speed" in latest:
-                st.metric("💨 Wind Speed", f"{latest['Wind_Speed']:.1f} m/s")
+                wind_speed = latest['Wind_Speed']
+                st.metric("💨 Wind Speed", f"{wind_speed:.1f} m/s")
+                # Dynamic explanation based on wind speed
+                if wind_speed > 10:
+                    st.error("🌪️ **Very windy!** Risk of crop damage. Avoid spraying. Secure structures.")
+                elif wind_speed > 5:
+                    st.warning("💨 **Windy conditions.** Not ideal for spraying pesticides.")
+                elif wind_speed > 2:
+                    st.success("🍃 **Gentle breeze.** Good air circulation for crops.")
+                else:
+                    st.info("😌 **Calm conditions.** Good for spraying and field work.")
 
         st.markdown("---")
 
@@ -745,6 +992,10 @@ with tab1:
 
         if stats:
             st.subheader("📈 Statistical Summary")
+            if st.button("🔊 Listen to Stats"):
+                 stats_text = f"Statistical Summary. Average temperature is {stats['avg_temp']:.1f} degrees. Maximum reached {stats['max_temp']:.1f} degrees. Total rain in last 30 days is {stats['total_rain_30d']:.1f} millimeters."
+                 autoplay_audio(text_to_audio(stats_text))
+
             col1, col2, col3 = st.columns(3)
 
             with col1:
@@ -755,9 +1006,20 @@ with tab1:
 
             with col2:
                 st.markdown("**Rainfall Summary**")
-                st.write(f"Last 30 days: {stats['total_rain_30d']:.1f} mm")
+                rain_30d = stats['total_rain_30d']
+                st.write(f"Last 30 days: {rain_30d:.1f} mm")
                 st.write(f"Last 90 days: {stats['total_rain_90d']:.1f} mm")
                 st.write(f"Daily average: {stats['avg_daily_rain']:.1f} mm")
+                
+                # Dynamic explanation based on 30-day rainfall
+                if rain_30d < 50:
+                    st.warning("⚠️ **Low rainfall** in past month. Increase irrigation frequency.")
+                elif rain_30d < 100:
+                    st.info("💧 **Below average rain.** Monitor soil moisture and irrigate as needed.")
+                elif rain_30d <= 200:
+                    st.success("✅ **Good rainfall** for most crops. Soil moisture should be adequate.")
+                else:
+                    st.warning("🌧️ **Heavy rainfall.** Watch for waterlogging and drainage issues.")
 
             with col3:
                 st.markdown("**Other Metrics**")
@@ -765,6 +1027,21 @@ with tab1:
 
         # Temperature trend
         st.subheader("🌡️ Temperature Trends")
+        if st.button("🔊 Listen to Trends"):
+             trend_text = generate_temp_trend_summary(df_zone)
+             autoplay_audio(text_to_audio(trend_text))
+        
+        with st.expander("ℹ️ How to Read This Chart"):
+            st.write("""
+            **What it shows:** Daily high (red), current (orange), and low (blue) temperatures over time.
+            
+            **How to use it:**
+            - **Red line (Max):** Highest temperature each day - important for heat stress on crops
+            - **Blue line (Min):** Lowest temperature each day - watch for cold that might damage crops
+            - **Orange line (Current):** Average temperature - shows overall temperature patterns
+            
+            **For farming:** Use this to spot temperature patterns and plan activities like planting or protecting crops from extreme heat or cold.
+            """)
 
         fig_temp = go.Figure()
         fig_temp.add_trace(
@@ -806,6 +1083,10 @@ with tab1:
 
         # Wind & Pressure Analysis
         st.subheader("🌬️ Wind & Atmosphere Analysis")
+        if st.button("🔊 Listen to Wind Analysis"):
+             wind_text = generate_wind_summary(df_zone)
+             autoplay_audio(text_to_audio(wind_text))
+        st.caption("💡 Wind direction and pressure help predict upcoming weather changes. Falling pressure often means rain is coming.")
         col_w1, col_w2 = st.columns(2)
         
         with col_w1:
@@ -848,10 +1129,138 @@ with tab1:
             fig_press.update_traces(line_color="#4FC3F7")
             fig_press.update_layout(height=350, xaxis_title="Time", yaxis_title="hPa")
             st.plotly_chart(fig_press, use_container_width=True)
+        
+        # Add detailed analysis below the charts
+        st.markdown("---")
+        st.markdown("### 📊 Detailed Analysis & Insights")
+        
+        col_analysis1, col_analysis2 = st.columns(2)
+        
+        with col_analysis1:
+            st.markdown("**🌬️ Wind Pattern Analysis**")
+            
+            # Calculate wind statistics
+            df_wind = df_zone.tail(24)
+            avg_speed = df_wind["Wind_Speed"].mean()
+            max_speed = df_wind["Wind_Speed"].max()
+            min_speed = df_wind["Wind_Speed"].min()
+            
+            # Determine predominant direction
+            def get_cardinal_direction(degrees):
+                directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+                idx = int((degrees + 22.5) / 45) % 8
+                return directions[idx]
+            
+            cardinal_dirs = [get_cardinal_direction(d) for d in df_wind["Wind_Direction"].values]
+            from collections import Counter
+            most_common = Counter(cardinal_dirs).most_common(2)
+            predominant_dir = most_common[0][0] if most_common else "Variable"
+            predominant_pct = (most_common[0][1] / len(cardinal_dirs) * 100) if most_common else 0
+            
+            st.write(f"**Wind Statistics (Last 24h):**")
+            st.write(f"- Predominant Direction: **{predominant_dir}** ({predominant_pct:.0f}% of time)")
+            st.write(f"- Average Speed: **{avg_speed:.1f} m/s**")
+            st.write(f"- Speed Range: {min_speed:.1f} - {max_speed:.1f} m/s")
+            
+            # Wind consistency
+            speed_std = df_wind["Wind_Speed"].std()
+            if speed_std < 1:
+                consistency = "Very Consistent"
+                consistency_icon = "✅"
+            elif speed_std < 2:
+                consistency = "Moderately Consistent"
+                consistency_icon = "🔄"
+            else:
+                consistency = "Variable"
+                consistency_icon = "⚠️"
+            
+            st.write(f"- Wind Consistency: {consistency_icon} **{consistency}**")
+            
+            # Farming implications
+            st.markdown("**🌾 Farming Implications:**")
+            
+            if avg_speed > 7:
+                st.error("🌪️ **Very High Winds** - Avoid all field work. Risk of crop damage and soil erosion.")
+            elif avg_speed > 5:
+                st.warning("💨 **High Winds** - Not suitable for spraying. Delay pesticide/herbicide application.")
+            elif avg_speed >= 2 and avg_speed <= 5:
+                st.success("✅ **Ideal Winds** - Good air circulation reduces disease risk. Suitable for most farm activities.")
+            else:
+                st.info("🍃 **Light Winds** - Excellent for spraying. Minimal drift risk.")
+            
+            # Direction-based weather prediction
+            if predominant_dir in ['E', 'SE', 'S', 'SW']:
+                st.info(f"💧 **{predominant_dir} winds** typically bring moisture from the ocean. Monitor for potential rainfall.")
+            elif predominant_dir in ['N', 'NE', 'NW']:
+                st.info(f"🌤️ **{predominant_dir} winds** usually bring drier, cooler air. Expect clearer conditions.")
+            elif predominant_dir == 'W':
+                st.info(f"⛅ **{predominant_dir} winds** can bring variable weather. Stay alert to changes.")
+        
+        with col_analysis2:
+            st.markdown("**🌡️ Atmospheric Pressure Analysis**")
+            
+            # Pressure statistics
+            current_pressure = df_zone["Pressure"].iloc[-1]
+            pressure_24h_ago = df_zone["Pressure"].iloc[-24] if len(df_zone) >= 24 else df_zone["Pressure"].iloc[0]
+            pressure_change_24h = current_pressure - pressure_24h_ago
+            
+            # Calculate 6-hour trend
+            if len(df_zone) >= 6:
+                pressure_6h_ago = df_zone["Pressure"].iloc[-6]
+                pressure_change_6h = current_pressure - pressure_6h_ago
+                trend_6h = "Rising" if pressure_change_6h > 0.5 else "Falling" if pressure_change_6h < -0.5 else "Stable"
+            else:
+                pressure_change_6h = 0
+                trend_6h = "Insufficient data"
+            
+            st.write(f"**Pressure Metrics:**")
+            st.write(f"- Current: **{current_pressure:.1f} hPa**")
+            st.write(f"- 24h Change: **{pressure_change_24h:+.1f} hPa**")
+            st.write(f"- 6h Trend: **{trend_6h}** ({pressure_change_6h:+.1f} hPa)")
+            
+            # Pressure classification
+            if current_pressure < 1000:
+                pressure_class = "Low Pressure System"
+                pressure_icon = "🌧️"
+            elif current_pressure > 1020:
+                pressure_class = "High Pressure System"
+                pressure_icon = "☀️"
+            else:
+                pressure_class = "Normal Pressure"
+                pressure_icon = "⛅"
+            
+            st.write(f"- System Type: {pressure_icon} **{pressure_class}**")
+            
+            # Weather prediction
+            st.markdown("**🔮 Weather Forecast:**")
+            
+            if pressure_change_24h < -5:
+                st.error("⛈️ **Rapidly Falling** - Severe weather likely! Expect heavy rain or storms within 12-24 hours.")
+                st.write("**Actions:** Secure equipment, check drainage, postpone all field work.")
+            elif pressure_change_24h < -2:
+                st.warning("🌧️ **Falling Pressure** - Weather deteriorating. Rain expected within 24-48 hours.")
+                st.write("**Actions:** Complete urgent outdoor tasks, prepare for wet conditions.")
+            elif pressure_change_24h > 5:
+                st.success("🌤️ **Rapidly Rising** - Weather clearing quickly! Expect sunny, dry conditions.")
+                st.write("**Actions:** Excellent time for harvesting, spraying, and field work.")
+            elif pressure_change_24h > 2:
+                st.success("☀️ **Rising Pressure** - Weather improving. Conditions becoming more stable.")
+                st.write("**Actions:** Good time to plan outdoor activities.")
+            else:
+                st.info("➡️ **Stable Pressure** - Weather conditions steady. No major changes expected.")
+                st.write("**Actions:** Continue normal farm operations.")
+            
+            # Additional context
+            if current_pressure < 995:
+                st.caption("⚠️ Very low pressure - associated with storms and heavy rainfall.")
+            elif current_pressure > 1025:
+                st.caption("ℹ️ Very high pressure - associated with clear skies and dry weather.")
 
 # --- TAB 2: Weather Forecast (Enhanced to match screenshot) ---
 with tab2:
     st.header(f"🔮 Weather Forecast for {selected_zone}")
+    
+    st.info("👨‍🌾 **What This Shows:** Weather predictions for the next 2 days (hourly) and 5 days (daily). Use this to plan farm work like planting, spraying pesticides, or harvesting. Avoid spraying before rain!")
     
     # Fetch forecast data
     with st.spinner("Fetching forecast data..."):
@@ -865,6 +1274,10 @@ with tab2:
         # --- Hourly Forecast ---
         with col_left:
             st.subheader("⏰ Hourly Forecast (Next 48 Hours)")
+            if st.button("🔊 Listen to Hourly Forecast"):
+                 forecast_text = generate_hourly_forecast_summary(df_hourly)
+                 autoplay_audio(text_to_audio(forecast_text))
+            st.caption("💡 **For farmers:** Check hourly forecasts before spraying crops or doing outdoor work. High rain probability (>60%) means postpone spraying.")
             
             if not df_hourly.empty:
                 # Temperature line chart (already defined above)
@@ -931,6 +1344,10 @@ with tab2:
         # --- Daily Forecast ---
         with col_right:
             st.subheader("📅 Daily Forecast (5-Day)")
+            if st.button("🔊 Listen to Daily Forecast"):
+                 daily_text = generate_daily_forecast_summary(df_daily)
+                 autoplay_audio(text_to_audio(daily_text))
+            st.caption("💡 **For farmers:** Use this to plan your week. Look for dry days for harvesting and rainy days to avoid field work.")
             
             if not df_daily.empty:
                 # Display daily forecast cards
@@ -997,6 +1414,8 @@ with tab2:
 # --- TAB 4: Risk Analysis ---
 with tab4:
     st.header(f"💧 Risk Analysis for {selected_zone}")
+    
+    st.info("👨‍🌾 **What This Shows:** Drought and waterlogging risks based on recent rainfall. This helps you protect your crops by taking action early (irrigation for drought, drainage for waterlogging).")
 
     df_risk = identify_wet_dry_periods(df_zone)
 
@@ -1011,19 +1430,25 @@ with tab4:
                 f"🚨 **DROUGHT ALERT**: 7-day rainfall is {latest_risk['Rain_7D_Sum']:.1f} mm "
                 f"(threshold: ≤ {DROUGHT_THRESHOLD} mm). Consider irrigation measures."
             )
+            st.warning("👨‍🌾 **What to do:** Your crops may not have enough water. Start irrigation immediately, especially for young plants. Check soil moisture daily.")
         elif latest_risk["Risk_Flag"] == "Waterlogging Risk":
             st.error(
                 f"⚠️ **WATERLOGGING ALERT**: 7-day rainfall is {latest_risk['Rain_7D_Sum']:.1f} mm "
                 f"(threshold: ≥ {WET_THRESHOLD} mm). Monitor for crop disease."
             )
+            st.warning("👨‍🌾 **What to do:** Too much water can damage crop roots and cause diseases. Improve drainage, avoid adding more water, and watch for fungal diseases on leaves.")
         else:
             st.success(
                 f"✅ **NORMAL CONDITIONS**: 7-day rainfall is {latest_risk['Rain_7D_Sum']:.1f} mm. "
                 "No immediate risk detected."
             )
+            st.info("👨‍🌾 **What to do:** Conditions are good for farming. Continue normal watering and farming activities.")
 
         # Visualization
         st.subheader("📊 Rainfall and Risk Trends")
+        if st.button("🔊 Listen to Risk Analysis"):
+             risk_text = generate_drought_risk_summary(latest_risk)
+             autoplay_audio(text_to_audio(risk_text))
 
         fig_rain = px.bar(
             df_risk.tail(90).reset_index(),
@@ -1043,6 +1468,7 @@ with tab4:
 
         # Gauge Chart for Current Status
         st.subheader("⏱️ Current Risk Monitor")
+        st.caption("💡 **For farmers:** The gauge shows total rain in the last 7 days. Green zone = good. Red zone (left) = too dry, need irrigation. Blue zone (right) = too wet, improve drainage.")
         
         # Determine gauge color based on risk
         gauge_color = "#4caf50" # Green
@@ -1105,7 +1531,7 @@ with tab4:
 # --- TAB 3: Historical Trends ---
 with tab3:
     st.header(f"📜 Historical Climate Trends for {selected_zone}")
-    st.info("Analysis based on available historical data (2020-2025).")
+    st.info("👨‍🌾 **What This Shows:** Long-term weather patterns from past years. Use this to understand how weather is changing and plan for future seasons based on historical patterns.")
     
     # Use full dataset for historical trends, ignoring the sidebar date filter
     df_history = df_raw[df_raw["Zone"] == selected_zone].copy()
@@ -1113,56 +1539,129 @@ with tab3:
     if df_history.empty:
         st.warning("Insufficient data for trend analysis.")
     else:
-        # 1. Annual Rainfall Comparison
-        st.subheader("🌧️ Annual Rainfall Comparison")
-        annual_metrics = calculate_annual_metrics(df_history)
+        # 1. Monthly Rainfall Accumulation
+        st.subheader("🌧️ Rainfall Accumulation Over Time")
+        if st.button("🔊 Listen to Historical Rain"):
+             from summary_generator import generate_historical_rain_summary 
+             # Local import or use global if already imported. I globally imported it earlier but let's be safe.
+             hist_text = generate_historical_rain_summary(rain_df if 'rain_df' in locals() else None)
+             autoplay_audio(text_to_audio(hist_text))
         
-        if not annual_metrics.empty:
-            fig_annual_rain = px.bar(
-                annual_metrics,
-                x=annual_metrics.index,
-                y="Daily_Precipitation",
-                title="Total Annual Rainfall (mm)",
-                labels={"index": "Year", "Daily_Precipitation": "Total Rainfall (mm)"},
-                color="Daily_Precipitation",
-                color_continuous_scale="Blues"
-            )
-            st.plotly_chart(fig_annual_rain, use_container_width=True)
+        with st.expander("ℹ️ How to Read This Chart"):
+            st.write("""
+            **What it shows:** Total rainfall accumulated each month over time.
             
-            # Trend interpretation
-            # Simple regression or just comparing first/last
-            if len(annual_metrics) > 1:
-                first_year = annual_metrics.iloc[0]["Daily_Precipitation"]
-                last_complete_year = annual_metrics.iloc[-2]["Daily_Precipitation"] # Assuming current year is incomplete
-                diff = last_complete_year - first_year
-                if diff > 100:
-                    st.write(f"ℹ️ **Trend:** Rainfall has increased by ~{diff:.0f}mm compared to the start of the period.")
-                elif diff < -100:
-                    st.write(f"ℹ️ **Trend:** Rainfall has decreased by ~{abs(diff):.0f}mm compared to the start of the period.")
+            **How to use it:**
+            - **Higher bars** = More rain that month (good for water-loving crops)
+            - **Lower bars** = Less rain that month (may need more irrigation)
+            - **Continuous timeline** = Shows rainfall patterns month by month
+            
+            **For farming:** Compare rainfall across months to identify wet and dry periods. Plan irrigation and crop selection based on these patterns.
+            """)
+        
+        # Calculate monthly rainfall
+        daily = calculate_daily_aggregates(df_history)
+        if not daily.empty:
+            # Filter out incomplete years
+            days_per_year = daily.groupby(daily.index.year).size()
+            valid_years = days_per_year[days_per_year >= 180].index
+            daily_filtered = daily[daily.index.year.isin(valid_years)]
+            
+            # Group by month
+            monthly_rain = daily_filtered.resample("M").agg({
+                "Daily_Precipitation": "sum"
+            })
+            
+            if not monthly_rain.empty:
+                # Create DataFrame for plotting
+                rain_df = pd.DataFrame({
+                    "Date": monthly_rain.index,
+                    "Rainfall": monthly_rain["Daily_Precipitation"].values
+                })
+                
+                fig_monthly_rain = px.bar(
+                    rain_df,
+                    x="Date",
+                    y="Rainfall",
+                    title="Monthly Rainfall (mm)",
+                    labels={"Date": "Month", "Rainfall": "Total Rainfall (mm)"},
+                    color="Rainfall",
+                    color_continuous_scale="Blues"
+                )
+                # Format x-axis to show month-year labels
+                fig_monthly_rain.update_xaxes(
+                    tickformat="%b %Y",  # Display as "Jan 2024", "Feb 2024", etc.
+                    dtick="M1"  # One tick per month
+                )
+                st.plotly_chart(fig_monthly_rain, use_container_width=True)
+                
+                # Trend interpretation
+                if len(rain_df) > 3:
+                    recent_avg = rain_df.tail(3)["Rainfall"].mean()
+                    earlier_avg = rain_df.head(3)["Rainfall"].mean()
+                    diff = recent_avg - earlier_avg
+                    if diff > 20:
+                        st.write(f"ℹ️ **Trend:** Recent months show ~{diff:.0f}mm more rainfall on average compared to earlier months.")
+                    elif diff < -20:
+                        st.write(f"ℹ️ **Trend:** Recent months show ~{abs(diff):.0f}mm less rainfall on average compared to earlier months.")
         
         col1, col2 = st.columns(2)
         
         with col1:
             # 2. Drought Frequency
             st.subheader("🌵 Drought Frequency")
-            drought_counts = calculate_drought_frequency_yearly(df_history)
+            if st.button("🔊 Listen to Drought Stats"):
+                 drought_text = "Drought Frequency Analysis. This chart shows the number of dry days per month. High bars indicate periods of water stress."
+                 autoplay_audio(text_to_audio(drought_text))
+            st.caption("💡 **For farmers:** Shows how many dry days occurred each month. More drought days = higher risk of crop water stress. Plan irrigation accordingly.")
             
-            if not drought_counts.empty:
-                fig_drought = px.line(
-                    drought_counts,
-                    x=drought_counts.index,
-                    y="Drought_Days",
-                    title="Number of Drought Risk Days per Year",
-                    labels={"index": "Year", "Drought_Days": "Days with Drought Risk"},
-                    markers=True,
-                    line_shape="spline"
-                )
-                fig_drought.update_traces(line_color="red")
-                st.plotly_chart(fig_drought, use_container_width=True)
+            # Get drought risk data
+            df_risk = identify_wet_dry_periods(df_history)
+            
+            if not df_risk.empty:
+                # Filter for drought days
+                drought_days = df_risk[df_risk["Risk_Flag"] == "Drought Risk"]
+                
+                # Group by month instead of year for continuous timeline
+                monthly_droughts = drought_days.resample("M").size()
+                
+                # Filter out months with no data or from incomplete years
+                daily = calculate_daily_aggregates(df_history)
+                if not daily.empty:
+                    days_per_year = daily.groupby(daily.index.year).size()
+                    valid_years = days_per_year[days_per_year >= 180].index
+                    monthly_droughts = monthly_droughts[monthly_droughts.index.year.isin(valid_years)]
+                
+                if not monthly_droughts.empty:
+                    # Create DataFrame for plotting
+                    drought_df = pd.DataFrame({
+                        "Date": monthly_droughts.index,
+                        "Drought_Days": monthly_droughts.values
+                    })
+                    
+                    fig_drought = px.line(
+                        drought_df,
+                        x="Date",
+                        y="Drought_Days",
+                        title="Number of Drought Risk Days per Month",
+                        labels={"Date": "Month", "Drought_Days": "Days with Drought Risk"},
+                        markers=True
+                    )
+                    fig_drought.update_traces(line_color="red")
+                    # Format x-axis to show month-year labels
+                    fig_drought.update_xaxes(
+                        tickformat="%b %Y",  # Display as "Jan 2024", "Feb 2024", etc.
+                        dtick="M1"  # One tick per month
+                    )
+                    st.plotly_chart(fig_drought, use_container_width=True)
         
         with col2:
             # 3. Planting Season Onset
             st.subheader("🌱 Planting Season Onset")
+            if st.button("🔊 Listen to Onset Advice"):
+                 onset_text = "Planting Season Onset. This shows when the rains typically start. Use this to determine the best week to plant your crops."
+                 autoplay_audio(text_to_audio(onset_text))
+            st.caption("💡 **For farmers:** Shows when the rainy season typically starts each year (after March 1st). Use this to plan your planting dates. Earlier onset = plant earlier.")
             onsets = calculate_planting_onset(df_history)
             
             if not onsets.empty:
@@ -1171,7 +1670,7 @@ with tab3:
                     x="Year",
                     y="Day_Of_Year",
                     title="Estimated Planting Start Date (Day of Year)",
-                    labels={"Day_Of_Year": "Day of Year (1-365)"},
+                    labels={"Day_Of_Year": "Day of Year (1-365)", "Year": "Year"},
                     hover_data={"Onset_Date": "|%Y-%m-%d"}
                 )
                 # Add trendline
@@ -1179,13 +1678,21 @@ with tab3:
                    go.Scatter(x=onsets["Year"], y=onsets["Day_Of_Year"], mode='lines', line=dict(dash='dot', color='green'), name='Trend')
                 )
                 
+                # Format x-axis to show clean year labels (2024, 2025) instead of decimals
+                fig_onset.update_xaxes(
+                    tickmode='linear',
+                    dtick=1,
+                    tickformat='d'  # Display as integers
+                )
+                
                 st.plotly_chart(fig_onset, use_container_width=True)
                 st.caption("*Onset defined as first date after Mar 1st with >20mm rain in 3 days.*")
 
         # 4. Crop GDD Comparison (Multi-year)
         st.subheader("☀️ Growing Degree Days (GDD) Accumulation by Year")
-        crop_gdd_select = st.selectbox("Select Crop for GDD Trend:", list(CROP_PROFILES.keys()), key="gdd_trend_crop")
-        t_base_trend = CROP_PROFILES[crop_gdd_select]["T_base"]
+        st.caption("💡 **For farmers:** GDD measures heat available for crop growth. Compare different years to see which had better growing conditions.")
+        crop_gdd_select = st.selectbox("Select Crop for GDD Trend:", list(SEASONAL_CROPS.keys()), key="gdd_trend_crop")
+        t_base_trend = SEASONAL_CROPS[crop_gdd_select]["T_base"]
         
         # Calculate full GDD
         df_gdd_all = calculate_gdd(df_history, t_base_trend)
@@ -1212,74 +1719,22 @@ with tab3:
             )
             st.plotly_chart(fig_gdd_trend, use_container_width=True)
 
+        
 
-# --- TAB 5: GDD Tracking ---
+                
+
+
+                
+
+# --- TAB 5: Crop Planning ---
 with tab5:
-    st.header("🌱 Growing Degree Days (GDD) Tracking")
-
-    crop_name = st.selectbox("Select Crop:", list(CROP_PROFILES.keys()))
-    T_base = CROP_PROFILES[crop_name]["T_base"]
-
-    st.info(
-        f"Calculating GDD for **{crop_name}** using Base Temperature (T_base) = **{T_base}°C**"
-    )
-
-    df_gdd = calculate_gdd(df_zone, T_base)
-
-    if df_gdd.empty:
-        st.warning("Insufficient data for GDD calculation.")
-    else:
-        # Current GDD status
-        current_gdd = df_gdd["Cumulative_GDD"].iloc[-1]
-        target_gdd = CROP_PROFILES[crop_name].get("GDD_to_Maturity", 0)
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.metric("📊 Current Cumulative GDD", f"{current_gdd:.0f} °C-days")
-
-        with col2:
-            st.metric("🎯 GDD to Maturity", f"{target_gdd:.0f} °C-days")
-
-        with col3:
-            if target_gdd > 0:
-                progress = (current_gdd / target_gdd) * 100
-                st.metric("📈 Progress", f"{progress:.1f}%")
-
-        # Visualization
-        fig_gdd = px.line(
-            df_gdd.tail(180).reset_index(),
-            x="Timestamp",
-            y="Cumulative_GDD",
-            title=f"Cumulative GDD for {crop_name} (Last 6 Months)",
-        )
-
-        if target_gdd > 0:
-            fig_gdd.add_hline(
-                y=target_gdd,
-                line_dash="dash",
-                line_color="green",
-                annotation_text="Maturity Target",
-            )
-
-        st.plotly_chart(fig_gdd, use_container_width=True)
-
-        # Recent GDD data
-        st.subheader("📅 Recent Daily GDD")
-        st.dataframe(
-            df_gdd[["Daily_GDD", "Cumulative_GDD"]]
-            .tail(14)
-            .style.format({"Daily_GDD": "{:.1f}", "Cumulative_GDD": "{:.1f}"}),
-            use_container_width=True,
-        )
-
-# --- TAB 6: Crop Planning ---
-with tab6:
     st.header("🗓️ Crop Planning & Suitability Analysis")
+    
+    st.info("👨‍🌾 **What This Shows:** Recommendations on which crops to plant based on your area's weather conditions. Also compares current weather to historical patterns to help you plan better.")
     
     # --- Comparative Analysis (Past vs Current vs Future) ---
     st.subheader("🔮 Integrated Season View (Past vs Current vs Future)")
-    st.info("Compare this year's weather against the historical average and upcoming forecast.")
+    st.caption("💡 **For farmers:** Compare this year's weather (green) to past years' average (gray) and upcoming forecast (blue). This helps you know if this year is warmer, cooler, wetter, or drier than normal.")
     
     # Prepare Data
     current_year = datetime.now().year
@@ -1347,7 +1802,7 @@ with tab6:
 
     fig_comp.update_layout(
         title="Temperature Comparison: Past, Present, and Future",
-        xaxis_title="Day of Year",
+        xaxis_title="Time of Year",
         yaxis_title="Temperature (°C)",
         hovermode="x unified",
         xaxis=dict(range=[1, 366]) # Fixed range to show full year seasonality context? Or zoom to current?
@@ -1357,6 +1812,36 @@ with tab6:
     # Dynamic Zoom
     today_doy = datetime.now().timetuple().tm_yday
     fig_comp.update_xaxes(range=[max(1, today_doy - 30), min(365, today_doy + 15)])
+    
+    # Convert day-of-year to actual date ranges for better readability
+    # Get current year for date conversion
+    current_year = datetime.now().year
+    
+    # Create function to convert day-of-year to date
+    def doy_to_date(day_of_year, year=current_year):
+        """Convert day of year to actual date"""
+        date = datetime(year, 1, 1) + timedelta(days=day_of_year - 1)
+        return date.strftime("%b %d")  # e.g., "Nov 16"
+    
+    # Generate tick values every 10 days within the visible range
+    visible_start = max(1, today_doy - 30)
+    visible_end = min(365, today_doy + 15)
+    tick_vals = list(range(visible_start, visible_end + 1, 10))
+    
+    # Convert to date ranges (e.g., "Nov 09 - Nov 19")
+    tick_text = []
+    for day in tick_vals:
+        start_date = doy_to_date(day)
+        end_date = doy_to_date(min(day + 9, 365))  # 10-day range
+        tick_text.append(f"{start_date} - {end_date}")
+    
+    # Update x-axis to show date ranges
+    fig_comp.update_xaxes(
+        tickmode='array',
+        tickvals=tick_vals,
+        ticktext=tick_text,
+        title="Date Range (10-Day Periods)"
+    )
     
     st.plotly_chart(fig_comp, use_container_width=True)
     
@@ -1406,38 +1891,21 @@ with tab6:
 
     st.markdown("---")
 
-    # Crop suitability (Existing Code)
-    st.subheader("🌾 Crop Suitability Assessment")
-
-    df_suggestions = suggest_crops(df_zone)
-
-    if df_suggestions.empty:
-        st.warning("Insufficient data for crop suitability analysis.")
-    else:
-        st.dataframe(df_suggestions, hide_index=True, use_container_width=True)
-
-        st.info(
-            "**Note:** Suitability is based on long-term temperature and rainfall "
-            "matching to known crop requirements. 🟢 Highly Suitable meets all primary criteria."
-        )
-
-    st.markdown("---")
 
     # Planting window advisory
     st.subheader("📅 Planting Window Advisory")
+    st.caption("💡 **For farmers:** This tells you the best time to plant crops based on historical rainfall patterns.")
 
     st.success(
-        f"**ADVISORY for {selected_zone}:** Historical data suggests the most reliable "
-        "primary planting window begins around **March 15** and closes by **April 30**."
+        f"**RECOMMENDED PLANTING PERIOD for {selected_zone}:** Based on past years, the best time to plant is between **March 15 and April 30**."
     )
 
     st.info(
-        "This window typically provides stable rainfall onset and sufficient soil "
-        "temperature for germination. Always cross-reference with current year conditions."
+        "**Why this period?** This is when rain usually starts and soil is warm enough for seeds to grow. Always check current year weather before planting!"
     )
 
-# --- TAB 7: Data Archive ---
-with tab7:
+# --- TAB 6: Data Archive ---
+with tab6:
     st.header("📁 Raw Data Archive")
 
     st.subheader(f"Recent Records for {selected_zone}")
@@ -1474,3 +1942,325 @@ with tab7:
         file_name=f"{selected_zone}_weather_data.csv",
         mime="text/csv",
     )
+
+
+with tab5:
+    # --- CROP PLANNING & SEASONAL RECOMMENDATIONS ---
+    st.markdown("---")
+    st.header("🗓️ Crop Planning & Seasonal Recommendations")
+    
+    st.info("👨‍🌾 **What This Shows:** Smart crop recommendations based on current season, historical weather patterns, and planting calendars. Tells you which crops to plant NOW for best results.")
+    
+    # Get current month and season
+    current_month = datetime.now().month
+    current_season = get_current_season(current_month)
+    month_names = ["", "January", "February", "March", "April", "May", "June", 
+                  "July", "August", "September", "October", "November", "December"]
+    
+    # Display current season
+    col_season1, col_season2 = st.columns([1, 2])
+    
+    with col_season1:
+        st.markdown(f"### 📅 Current Month")
+        st.markdown(f"# {month_names[current_month]}")
+        st.caption(f"Month {current_month} of 12")
+    
+    with col_season2:
+        st.markdown(f"### 🌦️ Agricultural Season")
+        st.markdown(f"# {current_season['name']}")
+        st.write(f"**Characteristics:**")
+        st.write(f"- Rainfall: {current_season['characteristics']['rainfall']}")
+        st.write(f"- Temperature: {current_season['characteristics']['temperature']}")
+        st.write(f"- Farming: {current_season['characteristics']['farming_activities']}")
+    
+    st.markdown("---")
+    
+    # Get crop recommendations
+    with st.spinner("Analyzing historical data and calculating crop suitability..."):
+        # Prepare historical data
+        df_history = df_raw[df_raw["Zone"] == selected_zone].copy()
+        
+        # Get recommendations
+        recommendations = get_crop_recommendations(df_history, current_month, selected_zone)
+    
+    # Display recommendations by category
+    st.subheader("🌾 Recommended Crops for This Month")
+    
+    # Recommendations
+    st.subheader("🌟 Top Recommendations")
+    
+    if st.button("🔊 Listen to Crop Recommendations"):
+         top_crop = recommendations[0] if recommendations else None
+         season = get_current_season()
+         crop_text = generate_crop_plan_summary(top_crop, season)
+         autoplay_audio(text_to_audio(crop_text))[0]
+    
+    # Group by category
+    highly_recommended = [r for r in recommendations if r['priority'] == 1]
+    recommended = [r for r in recommendations if r['priority'] == 2]
+    moderately_suitable = [r for r in recommendations if r['priority'] == 3]
+    not_recommended = [r for r in recommendations if r['priority'] == 4]
+    
+    # Highly Recommended
+    if highly_recommended:
+        st.markdown("### 🟢 HIGHLY RECOMMENDED (Plant Now!)")
+        st.success("These crops are in their optimal planting window with ideal conditions expected.")
+        
+        for i, rec in enumerate(highly_recommended, 1):
+            with st.expander(f"{i}. **{rec['crop']}** - {rec['score']:.0f}% Match", expanded=(i==1)):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown("**Why This Crop:**")
+                    for reason in rec['reasons']:
+                        st.write(f"- {reason}")
+                
+                with col2:
+                    st.markdown("**Quick Facts:**")
+                    st.write(f"💧 Water: {rec['water_requirement']}")
+                    st.write(f"🌱 Soil: {rec['soil_type']}")
+                    st.write(f"📅 Growing: {rec['growing_days']} days")
+                    st.write(f"� Harvest: {rec['expected_harvest']}")
+                    st.write(f"🗓️ Best Planting: {rec['optimal_planting_text']}")
+                
+                st.caption(f"ℹ️ {rec['description']}")
+    
+    # Recommended
+    if recommended:
+        st.markdown("### 🟡 RECOMMENDED (Good to Plant)")
+        st.info("These crops can be planted now with good success potential.")
+        
+        for i, rec in enumerate(recommended, 1):
+            with st.expander(f"{i}. **{rec['crop']}** - {rec['score']:.0f}% Match"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown("**Analysis:**")
+                    for reason in rec['reasons']:
+                        st.write(f"- {reason}")
+                
+                with col2:
+                    st.markdown("**Details:**")
+                    st.write(f"💧 {rec['water_requirement']}")
+                    st.write(f"🌱 {rec['soil_type']}")
+                    st.write(f"📅 {rec['growing_days']} days")
+                    st.write(f"� {rec['expected_harvest']}")
+                    st.write(f"🗓️ Best Plant: {rec['optimal_planting_text']}")
+    
+    # Moderately Suitable
+    if moderately_suitable:
+        st.markdown("### 🟠 MODERATELY SUITABLE (Consider Carefully)")
+        st.warning("These crops can work but may need extra care or have suboptimal conditions.")
+        
+        for i, rec in enumerate(moderately_suitable, 1):
+            with st.expander(f"{i}. **{rec['crop']}** - {rec['score']:.0f}% Match"):
+                for reason in rec['reasons']:
+                    st.write(f"- {reason}")
+                st.caption(f"Growing: {rec['growing_days']} days | Harvest: {rec['expected_harvest']} | Best Plant: {rec['optimal_planting_text']}")
+    
+    # Not Recommended
+    if not_recommended:
+        with st.expander("🔴 NOT RECOMMENDED (Wait for Better Season)", expanded=False):
+            st.error("These crops are not suitable for planting this month. Wait for their optimal season.")
+            
+            for rec in not_recommended:
+                st.write(f"**{rec['crop']}** ({rec['score']:.0f}%)")
+                for reason in rec['reasons']:
+                    st.write(f"  - {reason}")
+                st.write("")
+    
+    st.markdown("---")
+    
+    # Planting Calendar Visualization
+    st.subheader("📆 Annual Planting Calendar")
+    st.caption("Visual guide showing optimal planting months for each crop throughout the year")
+    
+    # Create calendar heatmap
+    calendar_data = get_planting_calendar()
+    
+    # Prepare data for heatmap
+    crops = list(calendar_data.keys())
+    months = list(range(1, 13))
+    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    
+    # Create matrix: 2 = optimal, 1 = acceptable, 0 = not suitable
+    calendar_matrix = []
+    for crop in crops:
+        row = []
+        for month in months:
+            if month in calendar_data[crop]['optimal']:
+                row.append(2)  # Optimal
+            elif month in calendar_data[crop]['planting']:
+                row.append(1)  # Acceptable
+            else:
+                row.append(0)  # Not suitable
+        calendar_matrix.append(row)
+    
+    # Create heatmap
+    fig_calendar = go.Figure(data=go.Heatmap(
+        z=calendar_matrix,
+        x=month_labels,
+        y=crops,
+        colorscale=[
+            [0, '#2d2d2d'],      # Not suitable - dark gray
+            [0.5, '#FFA726'],    # Acceptable - orange
+            [1, '#66BB6A']       # Optimal - green
+        ],
+        showscale=False,
+        hovertemplate='<b>%{y}</b><br>Month: %{x}<br>Status: %{z}<extra></extra>',
+        text=[[
+            'Optimal' if calendar_matrix[i][j] == 2 
+            else 'Acceptable' if calendar_matrix[i][j] == 1 
+            else 'Not Suitable' 
+            for j in range(12)
+        ] for i in range(len(crops))],
+        texttemplate='',
+    ))
+    
+    # Highlight current month
+    fig_calendar.add_vline(
+        x=current_month - 1,
+        line_dash="dash",
+        line_color="cyan",
+        line_width=3,
+        annotation_text=f"Current: {month_labels[current_month-1]}",
+        annotation_position="top"
+    )
+    
+    fig_calendar.update_layout(
+        title="Crop Planting Calendar - Abia State",
+        xaxis_title="Month",
+        yaxis_title="Crop",
+        height=500,
+        xaxis=dict(side='top'),
+    )
+    
+    st.plotly_chart(fig_calendar, use_container_width=True)
+    
+    # Legend
+    col_leg1, col_leg2, col_leg3 = st.columns(3)
+    with col_leg1:
+        st.markdown("🟢 **Green** = Optimal planting window")
+    with col_leg2:
+        st.markdown("🟠 **Orange** = Acceptable planting period")
+    with col_leg3:
+        st.markdown("⬛ **Gray** = Not recommended")
+    
+    st.caption("💡 **Tip:** Focus on crops showing green (optimal) for current month for best results!")
+    
+    st.markdown("---")
+    
+    # --- Integrated GDD Tracking Section ---
+    st.subheader("🌱 Track Crop Progress (GDD)")
+    st.info("👨‍🌾 **Monitor Your Crops:** Select a crop below to track its growth progress based on heat accumulation (Growing Degree Days).")
+    
+    with st.expander("❓ What is GDD? (Click to learn more)"):
+        st.write("""
+        **Growing Degree Days (GDD)** measures the heat your crops receive.
+        - **How it works:** We add up daily heat units. When the total reaches the target, the crop is ready.
+        - **Why use it:** It's more accurate than counting calendar days because crops grow faster in warm weather.
+        """)
+    
+    # Crop Selector using dynamic database
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+        crop_track_name = st.selectbox(
+            "Select Crop to Track:", 
+            list(SEASONAL_CROPS.keys()),
+            key="gdd_crop_select"
+        )
+    
+    # Get parameters from SEASONAL_CROPS
+    crop_params = SEASONAL_CROPS[crop_track_name]
+    t_base_track = crop_params["T_base"]
+    gdd_target_track = crop_params["GDD_to_Maturity"] # Total Required
+    
+    with col_sel2:
+        # Planting Date Input (Defaults to 30 days ago for demo)
+        default_plant = datetime.now() - timedelta(days=30)
+        planting_date = st.date_input(
+            "Select Planting Date:",
+            value=default_plant,
+            key="gdd_plant_date",
+            help="Select the date when the crop was planted to track progress accurately."
+        )
+
+    col_track1, col_track2 = st.columns(2)
+    with col_track1:
+        st.write(f"**Crop:** {crop_track_name}")
+        st.write(f"**Base Temp:** {t_base_track}°C")
+    with col_track2:
+        st.write(f"**Maturity Target:** {gdd_target_track} GDD")
+        st.write(f"**Growing Season:** {crop_params['growing_season_days']} days (approx)")
+    
+    # Filter history for this crop season (from planting date)
+    # Ensure specific date comparison
+    plant_ts = pd.Timestamp(planting_date)
+    if df_history.index.tz is not None and plant_ts.tz is None:
+         plant_ts = plant_ts.tz_localize(df_history.index.tz)
+    elif df_history.index.tz is None and plant_ts.tz is not None:
+         plant_ts = plant_ts.tz_localize(None)
+
+    df_crop_season = df_history[df_history.index >= plant_ts].copy()
+    
+    if df_crop_season.empty:
+         st.warning("No data available since selected planting date.")
+    else:
+        # Calculate GDD for this specific season
+        df_gdd_track = calculate_gdd(df_crop_season, t_base_track) 
+        
+        if not df_gdd_track.empty:
+            current_gdd_track = df_gdd_track["Cumulative_GDD"].iloc[-1]
+            
+            # Calculate progress
+            progress_track = (current_gdd_track / gdd_target_track) * 100
+            
+            # Metrics
+            # User request: "Cumulative, current and total GDD"
+            # We interpret: Cumulative = Total so far, Total = Target, Current = Daily Avg?
+            
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Cumulative GDD", f"{current_gdd_track:.0f}", help="Total heat units accumulated since planting")
+            m2.metric("Required Total", f"{gdd_target_track}", help="Total GDD needed for maturity")
+            
+            # Current Daily GDD (Average of last 7 days)
+            recent_daily_gdd = df_gdd_track.tail(7)["Daily_GDD"].mean()
+            m3.metric("Daily GDD (Avg)", f"{recent_daily_gdd:.1f}", help="Average GDD gained per day recently")
+            
+            m4.metric("Progress", f"{progress_track:.1f}%")
+            
+            # Progress Bar
+            st.progress(min(progress_track / 100, 1.0))
+            
+            # Status Message
+            if progress_track >= 100:
+                st.success(f"🎉 **Ready for Harvest!** {crop_track_name} has reached maturity.")
+            elif progress_track >= 80:
+                st.info("🌾 **Almost Ready.** Crop is nearing maturity.")
+            elif progress_track >= 50:
+                st.info("✅ **Good Progress.** Halfway there!")
+            else:
+                st.info("🌱 **Growing.** Early development stage.")
+                
+            # Estimated Dates
+            if progress_track < 100 and recent_daily_gdd > 0:
+                # Remaining GDD
+                remaining_gdd = gdd_target_track - current_gdd_track
+                days_remaining = max(0, remaining_gdd / recent_daily_gdd)
+                est_harvest = datetime.now() + timedelta(days=int(days_remaining))
+                
+                st.markdown(f"### 🗓️ Estimated Harvest: **{est_harvest.strftime('%B %d, %Y')}**")
+                st.caption(f"Based on recent weather, you have approx. **{int(days_remaining)} days** left to reach maturity.")
+        
+            # Chart
+            fig_track = px.line(
+                df_gdd_track.reset_index(), # Show all data from planting
+                x="Timestamp",
+                y="Cumulative_GDD",
+                title=f"GDD Accumulation Since Planting ({planting_date})",
+                labels={"Cumulative_GDD": "Accumulated Heat units"}
+            )
+            fig_track.add_hline(y=gdd_target_track, line_dash="dash", line_color="green", annotation_text="Target")
+            st.plotly_chart(fig_track, use_container_width=True)
+    
+    

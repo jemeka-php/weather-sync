@@ -26,6 +26,30 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     # Warning instead of Error for now, to allow partial functionality
     print("⚠️ Supabase credentials not found. Falling back to local CSV storage.")
 
+def init_supabase():
+    """Initialize and return the Supabase client."""
+    from supabase import create_client, Client
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Failed to initialize Supabase: {e}")
+        return None
+
+# --- SMS Configuration (Termii) ---
+TERMII_API_KEY = os.getenv("TERMII_API_KEY")
+TERMII_SENDER_ID = os.getenv("TERMII_SENDER_ID", "N-Alert") # Default or requested Sender ID
+TERMII_BASE_URL = "https://api.ng.termii.com/api"
+TERMII_BASE_URL = "https://api.ng.termii.com/api"
+
+# --- Email Configuration (SMTP) ---
+# --- Email Configuration (SMTP) ---
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.office365.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
 # --- Agricultural Zones Configuration ---
 # Coordinates are crucial for API calls
 AGRICULTURAL_ZONES = {

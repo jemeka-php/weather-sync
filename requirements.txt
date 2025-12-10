@@ -5,3 +5,5 @@ python-dotenv
 supabase
 plotly
 streamlit
+gTTS
+numpy

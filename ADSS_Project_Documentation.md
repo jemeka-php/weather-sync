@@ -70,3 +70,43 @@ The project codebase consists of the following key components:
 *   `data_collector.py`: The robust backend script for fetching API data and syncing to Supabase.
 *   `config.py`: Centralized configuration for Crop Profiles, API Keys, and risk thresholds.
 *   `.github/workflows/weather_sync.yml`: The automation engine that schedules data collection.
+
+---
+
+## 📉 Key Metrics & Agronomic Computations (Appendix)
+
+Understanding the data is crucial for using the ADSS effectively. Below are the core metrics tracked by the system, their mathematical basis, and their practical impact on farming.
+
+### 1. Growing Degree Days (GDD)
+*   **Formula**: $$GDD = \max(0, T_{avg} - T_{base})$$
+    *   Where $$T_{avg} = \frac{(T_{max} + T_{min})}{2}$$
+    *   $$T_{base}$$ is the crop-specific base temperature (e.g., 10°C for Maize).
+*   **Meaning**: Plants count "heat units," not calendar days. GDD measures the daily accumulation of useful heat for growth.
+*   **Impact on Farmers**:
+    *   **Predicts Harvest**: Helps farmers know exactly when crops will reach maturity regardless of weather fluctuations.
+    *   **Pest Planning**: Many pests emerge only after specific GDD thresholds.
+
+### 2. Relative Humidity (RH)
+*   **Definition**: The amount of water vapor in the air relative to what the air can hold at that temperature.
+*   **Impact on Farmers**:
+    *   **High RH (>80%)**: drastically increases the risk of **Fungal Diseases** (e.g., Late Blight in potatoes/tomatoes).
+    *   **Low RH (<40%)**: leads to rapid water loss (transpiration), causing crop stress even if soil is moist.
+
+### 3. Cumulative Rainfall (Rolling 7-Day Sum)
+*   **Formula**: $$\sum_{i=0}^{6} Rainfall_{day-i}$$
+*   **Meaning**: The total millimeters of rain received over the last week.
+*   **Impact on Farmers**:
+    *   **Drought Risk (<5mm)**: Signals a need for supplemental irrigation or mulching to preserve soil moisture.
+    *   **Waterlogging Risk (>150mm)**: Warns of root suffocation risk; farmers should clear drainage channels immediately.
+
+### 4. Temperature Extremes ($$T_{max}$$ and $$T_{min}$$)
+*   **Measurement**: The highest and lowest air temperatures recorded in a 24-hour period.
+*   **Impact on Farmers**:
+    *   **Heat Stress ($$T_{max} > 35^\circ C$$)**: Causes flower abortion in crops like Maize and Tomato, reducing yields.
+    *   **Chilling Injury ($$T_{min} < 10^\circ C$$)**: Stunts growth in tropical crops like Yam and Cassava.
+
+### 5. Wind Speed & Direction
+*   **Measurement**: Speed in meters per second (m/s) and cardinal direction.
+*   **Impact on Farmers**:
+    *   **Spraying Operations**: Herbicides/Pesticides should NOT be sprayed if wind speed > 5 m/s to prevent "drift" onto neighboring fields or homes.
+    *   **Physical Damage**: Winds > 10 m/s can cause lodging (stalks breaking) in mature Maize/Rice fields.
