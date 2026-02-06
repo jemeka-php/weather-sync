@@ -1,7 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-02-07 12:00:00,Aba,33.4,33.4,33.4,33.4,14,1006.4,7.5,35,20,0.0,0.0,Unknown,Historical Data,10.0
-2024-02-07 12:00:00,Bende,33.2,33.2,33.2,33.2,15,1003.9,10.0,41,47,0.0,0.0,Unknown,Historical Data,10.0
-2024-02-07 12:00:00,Umuahia,33.4,33.4,33.4,33.4,12,995.7,11.0,38,37,0.0,0.0,Unknown,Historical Data,10.0
 2024-02-07 13:00:00,Bende,34.7,34.7,34.7,34.7,15,1002.6,7.4,43,47,0.0,0.0,Unknown,Historical Data,10.0
 2024-02-07 13:00:00,Umuahia,35.0,35.0,35.0,35.0,11,994.5,8.4,40,1,0.0,0.0,Unknown,Historical Data,10.0
 2024-02-07 13:00:00,Aba,34.9,34.9,34.9,34.9,13,1005.1,5.9,43,15,0.0,0.0,Unknown,Historical Data,10.0
@@ -52122,3 +52119,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-02-06 11:31:18,Aba,34.08,34.08,34.08,35.83,41,1012.0,3.05,206,79,0.0,0.0,Clouds,broken clouds,10.0
 2026-02-06 11:31:19,Umuahia,34.28,34.28,34.28,35.65,39,1012.0,2.58,210,98,0.0,0.0,Clouds,overcast clouds,10.0
 2026-02-06 11:31:20,Bende,34.45,34.45,34.45,36.22,40,1012.0,2.01,201,98,0.0,0.0,Clouds,overcast clouds,10.0
+2026-02-06 12:53:43,Aba,34.68,34.68,34.68,36.08,38,1011.0,2.89,199,82,0.0,0.0,Clouds,broken clouds,10.0
+2026-02-06 12:53:44,Umuahia,35.86,35.86,35.86,36.72,33,1010.0,3.33,208,99,0.0,0.0,Clouds,overcast clouds,10.0
+2026-02-06 12:53:45,Bende,36.25,36.25,36.25,37.37,33,1010.0,2.0,208,97,0.0,0.0,Clouds,overcast clouds,10.0
