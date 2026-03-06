@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-03-06 02:00:00,Bende,26.0,26.0,26.0,26.0,92,1001.5,8.8,215,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 02:00:00,Umuahia,25.2,25.2,25.2,25.2,93,993.1,9.9,224,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 02:00:00,Aba,25.5,25.5,25.5,25.5,96,1004.0,7.4,227,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 03:00:00,Bende,25.9,25.9,25.9,25.9,91,1000.9,7.5,235,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 03:00:00,Umuahia,25.1,25.1,25.1,25.1,94,992.5,8.9,243,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 03:00:00,Aba,25.3,25.3,25.3,25.3,96,1003.3,7.1,246,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 04:00:00,Aba,25.0,25.0,25.0,25.0,97,1003.1,8.0,262,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 04:00:00,Umuahia,25.0,25.0,25.0,25.0,94,992.3,8.1,249,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-06 04:00:00,Bende,25.9,25.9,25.9,25.9,91,1000.7,7.1,240,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-06 05:00:00,Aba,25.0,25.0,25.0,25.0,97,1003.5,5.8,263,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-06 05:00:00,Umuahia,25.2,25.2,25.2,25.2,92,992.6,9.4,238,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-06 05:00:00,Bende,26.0,26.0,26.0,26.0,90,1001.0,7.9,231,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -51756,3 +51747,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-03-06 01:53:33,Aba,26.8,26.8,26.8,29.22,79,1009.0,2.18,224,6,0.0,0.0,Clear,clear sky,10.0
 2026-03-06 01:53:34,Umuahia,26.41,26.41,26.41,26.41,77,1009.0,2.3,217,6,0.0,0.0,Clear,clear sky,10.0
 2026-03-06 01:53:35,Bende,26.41,26.41,26.41,26.41,79,1009.0,2.0,205,5,0.0,0.0,Clear,clear sky,10.0
+2026-03-06 04:07:39,Aba,26.04,26.04,26.04,26.04,83,1009.0,1.42,239,7,0.0,0.0,Clear,clear sky,10.0
+2026-03-06 04:07:40,Umuahia,25.34,25.34,25.34,26.1,83,1009.0,1.31,252,22,0.0,0.0,Clouds,few clouds,10.0
+2026-03-06 04:07:41,Bende,25.38,25.38,25.38,26.19,85,1009.0,1.0,227,16,0.0,0.0,Clouds,few clouds,10.0
