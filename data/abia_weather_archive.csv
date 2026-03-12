@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-03-12 02:00:00,Aba,25.7,25.7,25.7,25.7,95,1004.2,7.6,245,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 02:00:00,Bende,25.3,25.3,25.3,25.3,99,1001.5,7.8,236,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 02:00:00,Umuahia,25.1,25.1,25.1,25.1,98,993.1,8.6,237,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 03:00:00,Umuahia,25.1,25.1,25.1,25.1,99,992.5,9.2,239,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 03:00:00,Bende,25.3,25.3,25.3,25.3,99,1000.8,7.3,237,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 03:00:00,Aba,25.4,25.4,25.4,25.4,96,1003.5,8.9,243,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 04:00:00,Umuahia,25.1,25.1,25.1,25.1,99,992.4,9.8,246,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 04:00:00,Aba,24.9,24.9,24.9,24.9,97,1003.4,8.0,252,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-03-12 04:00:00,Bende,25.3,25.3,25.3,25.3,99,1000.9,5.2,245,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-12 05:00:00,Aba,25.0,25.0,25.0,25.0,97,1004.3,7.1,240,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-12 05:00:00,Umuahia,25.0,25.0,25.0,25.0,97,993.3,7.6,262,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-03-12 05:00:00,Bende,25.6,25.6,25.6,25.6,99,1001.8,6.6,261,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -51693,3 +51684,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-03-12 01:51:33,Aba,26.01,26.01,26.01,26.01,84,1008.0,1.95,217,25,0.0,0.0,Clouds,scattered clouds,10.0
 2026-03-12 01:51:34,Umuahia,25.11,25.11,25.11,25.87,84,1008.0,1.44,216,4,0.0,0.0,Clear,clear sky,10.0
 2026-03-12 01:51:36,Bende,25.28,25.28,25.28,26.11,86,1008.0,1.03,196,4,0.0,0.0,Clear,clear sky,10.0
+2026-03-12 04:11:53,Aba,25.65,25.65,25.65,26.54,87,1009.0,1.36,217,48,0.0,0.0,Clouds,scattered clouds,10.0
+2026-03-12 04:11:54,Umuahia,24.58,24.58,24.58,25.39,88,1009.0,1.25,216,7,0.0,0.0,Clear,clear sky,10.0
+2026-03-12 04:11:55,Bende,24.83,24.83,24.83,25.69,89,1009.0,1.28,209,5,0.0,0.0,Clear,clear sky,10.0
