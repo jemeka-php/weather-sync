@@ -1,7 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-05-17 21:00:00,Bende,24.5,24.5,24.5,24.5,100,1003.5,0.8,63,100,5.3,0.0,Unknown,Historical Data,10.0
-2024-05-17 21:00:00,Aba,26.1,26.1,26.1,26.1,91,1005.8,6.7,286,76,0.0,0.0,Unknown,Historical Data,10.0
-2024-05-17 21:00:00,Umuahia,25.5,25.5,25.5,25.5,94,995.0,3.0,346,100,1.1,0.0,Unknown,Historical Data,10.0
 2024-05-17 22:00:00,Bende,24.8,24.8,24.8,24.8,99,1004.2,1.8,307,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-05-17 22:00:00,Umuahia,24.9,24.9,24.9,24.9,98,995.7,3.1,315,100,0.1,0.0,Unknown,Historical Data,10.0
 2024-05-17 22:00:00,Aba,25.9,25.9,25.9,25.9,93,1006.3,6.6,279,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -50049,3 +50046,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-05-17 20:45:57,Aba,24.59,24.59,24.59,25.56,94,1013.0,1.86,193,55,1.49,0.0,Rain,moderate rain,10.0
 2026-05-17 20:45:58,Umuahia,24.24,24.24,24.24,25.17,94,1013.0,1.72,207,75,0.12,0.0,Rain,light rain,10.0
 2026-05-17 20:45:59,Bende,24.6,24.6,24.6,25.57,94,1013.0,1.74,205,51,0.0,0.0,Clouds,broken clouds,10.0
+2026-05-17 21:52:47,Aba,24.45,24.45,24.45,25.41,94,1013.0,1.46,209,53,2.02,0.0,Rain,moderate rain,10.0
+2026-05-17 21:52:48,Umuahia,24.08,24.08,24.08,25.02,95,1013.0,1.68,219,79,0.0,0.0,Clouds,broken clouds,10.0
+2026-05-17 21:52:49,Bende,24.3,24.3,24.3,25.27,95,1013.0,1.65,208,57,0.0,0.0,Clouds,broken clouds,10.0
