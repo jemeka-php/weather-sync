@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-06-19 12:00:00,Bende,29.2,29.2,29.2,29.2,70,1003.0,4.0,190,100,0.1,0.0,Unknown,Historical Data,10.0
-2024-06-19 12:00:00,Umuahia,28.9,28.9,28.9,28.9,69,994.7,4.6,198,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-06-19 12:00:00,Aba,28.5,28.5,28.5,28.5,74,1005.8,6.8,183,100,0.8,0.0,Unknown,Historical Data,10.0
-2024-06-19 13:00:00,Umuahia,28.3,28.3,28.3,28.3,72,993.8,7.1,204,86,1.7,0.0,Unknown,Historical Data,10.0
-2024-06-19 13:00:00,Bende,29.3,29.3,29.3,29.3,69,1002.0,6.5,177,55,0.0,0.0,Unknown,Historical Data,10.0
-2024-06-19 13:00:00,Aba,29.2,29.2,29.2,29.2,76,1004.7,6.1,177,73,0.1,0.0,Unknown,Historical Data,10.0
-2024-06-19 14:00:00,Bende,30.8,30.8,30.8,30.8,65,1001.5,5.8,173,20,0.1,0.0,Unknown,Historical Data,10.0
-2024-06-19 14:00:00,Aba,29.0,29.0,29.0,29.0,74,1004.3,11.3,173,81,0.1,0.0,Unknown,Historical Data,10.0
-2024-06-19 14:00:00,Umuahia,30.3,30.3,30.3,30.3,65,993.3,5.9,191,34,0.2,0.0,Unknown,Historical Data,10.0
 2024-06-19 15:00:00,Bende,31.3,31.3,31.3,31.3,63,1000.6,6.2,187,46,0.0,0.0,Unknown,Historical Data,10.0
 2024-06-19 15:00:00,Umuahia,28.9,28.9,28.9,28.9,71,992.6,8.7,187,64,1.7,0.0,Unknown,Historical Data,10.0
 2024-06-19 15:00:00,Aba,29.2,29.2,29.2,29.2,72,1003.4,10.9,189,68,0.2,0.0,Unknown,Historical Data,10.0
@@ -48495,3 +48486,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-06-19 11:19:00,Aba,29.27,29.27,29.27,33.13,69,1012.0,3.69,204,97,0.0,0.0,Clouds,overcast clouds,10.0
 2026-06-19 11:19:01,Umuahia,28.86,28.86,28.86,32.42,70,1011.0,2.6,228,96,0.13,0.0,Rain,light rain,10.0
 2026-06-19 11:19:02,Bende,28.82,28.82,28.82,32.7,72,1011.0,1.9,235,97,0.18,0.0,Rain,light rain,10.0
+2026-06-19 14:57:58,Aba,26.5,26.5,26.5,26.5,81,1010.0,2.95,213,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-06-19 14:57:59,Umuahia,25.98,25.98,25.98,25.98,83,1010.0,2.54,225,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-06-19 14:58:00,Bende,26.53,26.53,26.53,26.53,82,1010.0,2.83,219,100,0.0,0.0,Clouds,overcast clouds,10.0
