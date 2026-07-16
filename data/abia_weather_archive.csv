@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-07-16 03:00:00,Aba,23.2,23.2,23.2,23.2,98,1007.6,6.0,197,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 03:00:00,Bende,23.1,23.1,23.1,23.1,99,1005.2,4.1,225,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 03:00:00,Umuahia,22.9,22.9,22.9,22.9,98,996.6,4.8,228,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 04:00:00,Umuahia,23.0,23.0,23.0,23.0,98,996.2,7.2,243,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 04:00:00,Aba,23.3,23.3,23.3,23.3,97,1007.3,6.4,223,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 04:00:00,Bende,23.3,23.3,23.3,23.3,99,1004.7,5.5,238,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 05:00:00,Umuahia,23.0,23.0,23.0,23.0,98,996.5,7.8,236,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 05:00:00,Bende,23.3,23.3,23.3,23.3,99,1005.0,6.4,227,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-07-16 05:00:00,Aba,23.4,23.4,23.4,23.4,97,1007.4,6.4,243,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-07-16 06:00:00,Umuahia,22.9,22.9,22.9,22.9,98,996.8,5.3,242,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-07-16 06:00:00,Bende,23.3,23.3,23.3,23.3,98,1005.3,5.4,233,100,0.1,0.0,Unknown,Historical Data,10.0
 2024-07-16 06:00:00,Aba,23.3,23.3,23.3,23.3,97,1007.7,4.2,239,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -47355,3 +47346,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-07-16 02:52:52,Aba,23.4,23.4,23.4,24.28,95,1014.0,1.66,256,100,0.28,0.0,Rain,light rain,10.0
 2026-07-16 02:52:53,Umuahia,22.49,22.49,22.49,23.33,97,1015.0,1.45,265,96,0.22,0.0,Rain,light rain,10.0
 2026-07-16 02:52:55,Bende,22.94,22.94,22.94,23.82,97,1014.0,1.26,251,96,0.29,0.0,Rain,light rain,10.0
+2026-07-16 05:37:25,Aba,23.35,23.35,23.35,24.22,95,1016.0,1.45,270,100,0.15,0.0,Rain,light rain,10.0
+2026-07-16 05:37:26,Umuahia,22.69,22.69,22.69,23.55,97,1016.0,1.18,269,98,0.26,0.0,Rain,light rain,10.0
+2026-07-16 05:37:28,Bende,23.02,23.02,23.02,23.91,97,1016.0,1.06,265,97,0.37,0.0,Rain,light rain,10.0
