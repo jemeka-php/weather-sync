@@ -1,16 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-08-03 03:00:00,Bende,23.3,23.3,23.3,23.3,90,1004.1,5.5,212,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 03:00:00,Umuahia,22.9,22.9,22.9,22.9,91,995.5,7.4,219,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 03:00:00,Aba,23.0,23.0,23.0,23.0,95,1006.5,4.3,228,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 04:00:00,Umuahia,22.5,22.5,22.5,22.5,93,995.7,7.3,213,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 04:00:00,Bende,23.5,23.5,23.5,23.5,89,1004.2,5.5,212,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 04:00:00,Aba,23.2,23.2,23.2,23.2,94,1006.8,4.1,218,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 05:00:00,Bende,23.2,23.2,23.2,23.2,91,1004.3,5.7,215,99,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 05:00:00,Umuahia,22.3,22.3,22.3,22.3,94,995.7,7.7,221,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 05:00:00,Aba,23.3,23.3,23.3,23.3,93,1006.9,6.9,223,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 06:00:00,Aba,23.2,23.2,23.2,23.2,94,1006.9,6.9,227,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 06:00:00,Bende,22.9,22.9,22.9,22.9,93,1004.4,6.4,227,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-03 06:00:00,Umuahia,22.5,22.5,22.5,22.5,94,995.9,8.1,225,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-08-03 07:00:00,Aba,23.3,23.3,23.3,23.3,94,1007.4,7.4,227,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-08-03 07:00:00,Bende,23.1,23.1,23.1,23.1,93,1005.0,6.5,236,99,0.0,0.0,Unknown,Historical Data,10.0
 2024-08-03 07:00:00,Umuahia,22.7,22.7,22.7,22.7,93,996.5,7.9,231,92,0.0,0.0,Unknown,Historical Data,10.0
@@ -46689,3 +46677,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-08-03 02:30:01,Aba,22.68,22.68,22.68,23.46,94,1014.0,1.57,249,100,0.0,0.0,Clouds,overcast clouds,10.0
 2026-08-03 02:30:02,Umuahia,22.03,22.03,22.03,22.82,97,1015.0,1.6,251,100,0.0,0.0,Clouds,overcast clouds,10.0
 2026-08-03 02:30:04,Bende,22.37,22.37,22.37,23.2,97,1014.0,1.45,250,100,0.56,0.0,Rain,light rain,10.0
+2026-08-03 06:18:29,Aba,22.83,22.83,22.83,23.62,94,1016.0,1.42,271,100,0.18,0.0,Rain,light rain,10.0
+2026-08-03 06:18:30,Umuahia,22.05,22.05,22.05,22.82,96,1016.0,1.4,265,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-08-03 06:18:31,Bende,22.44,22.44,22.44,23.27,97,1016.0,1.21,263,100,0.39,0.0,Rain,light rain,10.0
