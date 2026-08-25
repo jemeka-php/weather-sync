@@ -1,7 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-08-25 16:00:00,Aba,25.2,25.2,25.2,25.2,88,1005.6,8.2,247,100,0.3,0.0,Unknown,Historical Data,10.0
-2024-08-25 16:00:00,Umuahia,26.7,26.7,26.7,26.7,74,994.0,12.7,255,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-08-25 16:00:00,Bende,27.5,27.5,27.5,27.5,73,1002.3,9.5,259,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-08-25 17:00:00,Umuahia,25.4,25.4,25.4,25.4,83,994.0,10.4,236,100,0.1,0.0,Unknown,Historical Data,10.0
 2024-08-25 17:00:00,Aba,24.8,24.8,24.8,24.8,89,1005.1,8.4,245,100,0.9,0.0,Unknown,Historical Data,10.0
 2024-08-25 17:00:00,Bende,26.2,26.2,26.2,26.2,78,1002.4,8.4,239,100,0.7,0.0,Unknown,Historical Data,10.0
@@ -46350,3 +46347,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-08-25 15:38:13,Aba,28.72,28.72,28.72,32.65,73,1010.0,2.94,210,74,1.49,0.0,Rain,moderate rain,10.0
 2026-08-25 15:38:14,Umuahia,28.38,28.38,28.38,32.21,75,1010.0,1.87,212,89,1.48,0.0,Rain,moderate rain,10.0
 2026-08-25 15:38:16,Bende,28.64,28.64,28.64,33.37,78,1010.0,1.74,201,78,1.21,0.0,Rain,moderate rain,10.0
+2026-08-25 16:32:22,Aba,27.35,27.35,27.35,30.53,80,1010.0,2.65,207,72,1.48,0.0,Rain,moderate rain,10.0
+2026-08-25 16:32:23,Umuahia,26.87,26.87,26.87,29.72,83,1010.0,1.58,199,86,1.24,0.0,Rain,moderate rain,10.0
+2026-08-25 16:32:24,Bende,27.11,27.11,27.11,30.5,85,1010.0,1.64,192,73,0.84,0.0,Rain,light rain,10.0
