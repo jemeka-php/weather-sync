@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-09-26 22:00:00,Bende,23.0,23.0,23.0,23.0,98,1005.0,5.3,225,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-26 22:00:00,Umuahia,23.0,23.0,23.0,23.0,97,996.6,6.1,230,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-26 22:00:00,Aba,24.1,24.1,24.1,24.1,97,1007.6,6.2,229,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-26 23:00:00,Bende,22.9,22.9,22.9,22.9,98,1005.3,6.3,217,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-26 23:00:00,Aba,23.6,23.6,23.6,23.6,97,1007.7,3.9,242,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-26 23:00:00,Umuahia,22.9,22.9,22.9,22.9,97,996.7,5.6,230,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-27 00:00:00,Bende,22.8,22.8,22.8,22.8,99,1004.7,5.2,245,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-27 00:00:00,Umuahia,22.7,22.7,22.7,22.7,97,996.2,7.4,247,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-27 00:00:00,Aba,23.3,23.3,23.3,23.3,98,1007.2,4.2,265,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-09-27 01:00:00,Umuahia,22.5,22.5,22.5,22.5,97,995.8,5.8,263,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-09-27 01:00:00,Bende,22.9,22.9,22.9,22.9,98,1004.4,5.8,272,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-09-27 01:00:00,Aba,23.1,23.1,23.1,23.1,97,1006.6,5.6,253,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -44646,3 +44637,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-09-26 21:47:25,Aba,23.9,23.9,23.9,24.83,95,1014.0,1.98,256,85,0.0,0.0,Clouds,overcast clouds,10.0
 2026-09-26 21:47:26,Umuahia,23.09,23.09,23.09,23.99,97,1014.0,2.6,244,66,0.0,0.0,Clouds,broken clouds,10.0
 2026-09-26 21:47:27,Bende,23.43,23.43,23.43,24.36,97,1014.0,2.11,237,71,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-27 00:11:22,Aba,23.42,23.42,23.42,24.35,97,1013.0,1.88,252,84,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-27 00:11:23,Umuahia,22.92,22.92,22.92,23.83,98,1013.0,2.11,258,73,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-27 00:11:24,Bende,23.05,23.05,23.05,23.97,98,1013.0,1.64,253,76,0.0,0.0,Clouds,broken clouds,10.0
