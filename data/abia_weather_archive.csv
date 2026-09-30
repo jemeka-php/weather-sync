@@ -1,19 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-09-30 15:00:00,Bende,31.7,31.7,31.7,31.7,58,998.9,5.5,224,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-30 15:00:00,Aba,26.4,26.4,26.4,26.4,82,1002.5,8.9,199,77,2.9,0.0,Unknown,Historical Data,10.0
-2024-09-30 15:00:00,Umuahia,29.0,29.0,29.0,29.0,66,990.9,8.7,230,62,0.2,0.0,Unknown,Historical Data,10.0
-2024-09-30 16:00:00,Bende,27.1,27.1,27.1,27.1,83,999.1,12.6,160,74,1.4,0.0,Unknown,Historical Data,10.0
-2024-09-30 16:00:00,Umuahia,28.1,28.1,28.1,28.1,70,990.8,12.5,192,77,0.4,0.0,Unknown,Historical Data,10.0
-2024-09-30 16:00:00,Aba,27.1,27.1,27.1,27.1,82,1002.0,9.9,196,74,0.1,0.0,Unknown,Historical Data,10.0
-2024-09-30 17:00:00,Aba,27.0,27.0,27.0,27.0,78,1002.3,12.2,199,99,0.3,0.0,Unknown,Historical Data,10.0
-2024-09-30 17:00:00,Umuahia,26.3,26.3,26.3,26.3,82,991.2,11.5,191,100,0.4,0.0,Unknown,Historical Data,10.0
-2024-09-30 17:00:00,Bende,26.6,26.6,26.6,26.6,83,999.6,11.5,182,94,0.1,0.0,Unknown,Historical Data,10.0
-2024-09-30 18:00:00,Umuahia,25.7,25.7,25.7,25.7,83,991.9,8.3,193,100,0.5,0.0,Unknown,Historical Data,10.0
-2024-09-30 18:00:00,Bende,26.1,26.1,26.1,26.1,86,1000.2,7.6,188,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-09-30 18:00:00,Aba,25.5,25.5,25.5,25.5,85,1002.8,10.1,213,98,0.1,0.0,Unknown,Historical Data,10.0
-2024-09-30 19:00:00,Aba,24.7,24.7,24.7,24.7,91,1003.4,7.5,224,100,0.1,0.0,Unknown,Historical Data,10.0
-2024-09-30 19:00:00,Bende,25.6,25.6,25.6,25.6,86,1000.9,5.0,201,100,1.2,0.0,Unknown,Historical Data,10.0
-2024-09-30 19:00:00,Umuahia,24.6,24.6,24.6,24.6,89,992.4,10.3,234,100,0.3,0.0,Unknown,Historical Data,10.0
 2024-09-30 20:00:00,Bende,24.8,24.8,24.8,24.8,92,1001.7,7.9,223,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-09-30 20:00:00,Aba,24.4,24.4,24.4,24.4,94,1004.4,7.0,238,99,0.0,0.0,Unknown,Historical Data,10.0
 2024-09-30 20:00:00,Umuahia,23.9,23.9,23.9,23.9,91,993.3,8.1,227,100,0.1,0.0,Unknown,Historical Data,10.0
@@ -44430,3 +44415,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-09-30 14:34:36,Aba,30.94,30.94,30.94,33.55,55,1011.0,1.66,223,54,0.0,0.0,Clouds,broken clouds,10.0
 2026-09-30 14:34:37,Umuahia,29.73,29.73,29.73,32.71,62,1011.0,2.22,205,52,0.0,0.0,Clouds,broken clouds,10.0
 2026-09-30 14:34:38,Bende,29.97,29.97,29.97,33.39,63,1011.0,1.9,206,61,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-30 19:47:31,Aba,23.75,23.75,23.75,24.48,88,1014.0,2.64,190,65,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-30 19:47:32,Umuahia,23.36,23.36,23.36,24.18,93,1014.0,2.26,190,51,0.0,0.0,Clouds,broken clouds,10.0
+2026-09-30 19:47:33,Bende,23.3,23.3,23.3,24.17,95,1014.0,2.35,189,50,0.0,0.0,Clouds,scattered clouds,10.0
