@@ -1,13 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-10-18 18:00:00,Bende,26.7,26.7,26.7,26.7,89,1001.2,1.9,197,97,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 18:00:00,Aba,27.5,27.5,27.5,27.5,80,1003.6,3.2,199,88,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 18:00:00,Umuahia,27.2,27.2,27.2,27.2,79,992.8,3.7,259,96,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 19:00:00,Bende,25.6,25.6,25.6,25.6,93,1001.9,3.7,231,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 19:00:00,Aba,26.2,26.2,26.2,26.2,86,1004.6,5.3,198,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 19:00:00,Umuahia,26.1,26.1,26.1,26.1,82,993.5,5.8,256,99,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 20:00:00,Bende,25.3,25.3,25.3,25.3,93,1002.9,6.2,226,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-18 20:00:00,Aba,25.6,25.6,25.6,25.6,90,1005.6,4.6,216,100,0.1,0.0,Unknown,Historical Data,10.0
-2024-10-18 20:00:00,Umuahia,25.1,25.1,25.1,25.1,88,994.5,8.6,248,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-10-18 21:00:00,Bende,24.5,24.5,24.5,24.5,95,1004.1,6.1,214,100,0.2,0.0,Unknown,Historical Data,10.0
 2024-10-18 21:00:00,Aba,25.1,25.1,25.1,25.1,92,1006.7,5.7,212,100,0.0,0.0,Unknown,Historical Data,10.0
 2024-10-18 21:00:00,Umuahia,24.5,24.5,24.5,24.5,90,995.6,7.8,241,100,0.0,0.0,Unknown,Historical Data,10.0
@@ -43383,3 +43374,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-10-18 17:47:06,Aba,25.7,25.7,25.7,26.68,90,1011.0,2.51,200,91,1.44,0.0,Rain,moderate rain,10.0
 2026-10-18 17:47:07,Umuahia,25.3,25.3,25.3,26.16,87,1011.0,1.91,208,98,4.56,0.0,Rain,heavy intensity rain,3.356
 2026-10-18 17:47:08,Bende,25.23,25.23,25.23,26.18,91,1011.0,1.94,189,81,3.69,0.0,Rain,moderate rain,3.55
+2026-10-18 20:02:48,Aba,25.11,25.11,25.11,26.1,93,1013.0,2.45,185,100,1.19,0.0,Rain,moderate rain,10.0
+2026-10-18 20:02:49,Umuahia,25.11,25.11,25.11,25.97,88,1013.0,2.27,191,100,1.38,0.0,Rain,moderate rain,10.0
+2026-10-18 20:02:50,Bende,25.04,25.04,25.04,25.92,89,1013.0,1.95,180,100,1.88,0.0,Rain,moderate rain,10.0
