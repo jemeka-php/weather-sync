@@ -1,16 +1,4 @@
 Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Wind_Direction,Cloudiness,Precipitation_1h,Precipitation_3h,Weather_Condition,Weather_Description,Visibility
-2024-10-30 19:00:00,Bende,27.1,27.1,27.1,27.1,79,1001.4,9.5,155,96,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 19:00:00,Aba,26.4,26.4,26.4,26.4,86,1004.0,7.9,197,87,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 19:00:00,Umuahia,26.5,26.5,26.5,26.5,80,993.0,9.4,180,97,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 20:00:00,Bende,25.9,25.9,25.9,25.9,85,1002.4,8.8,176,91,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 20:00:00,Aba,25.7,25.7,25.7,25.7,89,1005.1,10.2,193,98,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 20:00:00,Umuahia,25.6,25.6,25.6,25.6,86,994.0,8.5,186,95,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 21:00:00,Aba,25.1,25.1,25.1,25.1,91,1005.9,8.1,198,98,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 21:00:00,Umuahia,25.0,25.0,25.0,25.0,90,994.9,8.6,200,42,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 21:00:00,Bende,25.1,25.1,25.1,25.1,88,1003.3,7.6,187,89,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 22:00:00,Umuahia,24.6,24.6,24.6,24.6,92,995.5,9.3,212,46,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 22:00:00,Aba,24.7,24.7,24.7,24.7,93,1006.5,7.3,197,100,0.0,0.0,Unknown,Historical Data,10.0
-2024-10-30 22:00:00,Bende,24.8,24.8,24.8,24.8,92,1003.9,8.5,207,44,0.0,0.0,Unknown,Historical Data,10.0
 2024-10-30 23:00:00,Aba,24.4,24.4,24.4,24.4,94,1006.6,7.0,209,98,0.0,0.0,Unknown,Historical Data,10.0
 2024-10-30 23:00:00,Bende,24.5,24.5,24.5,24.5,94,1004.0,7.7,213,61,0.0,0.0,Unknown,Historical Data,10.0
 2024-10-30 23:00:00,Umuahia,24.2,24.2,24.2,24.2,94,995.6,9.6,220,93,0.0,0.0,Unknown,Historical Data,10.0
@@ -42705,3 +42693,6 @@ Timestamp,Zone,T_current,T_min,T_max,Feels_Like,Humidity,Pressure,Wind_Speed,Win
 2026-10-30 18:57:53,Aba,24.45,24.45,24.45,25.35,92,1014.0,2.02,183,100,0.0,0.0,Clouds,overcast clouds,10.0
 2026-10-30 18:57:54,Umuahia,24.04,24.04,24.04,24.93,93,1014.0,2.8,171,100,0.0,0.0,Clouds,overcast clouds,10.0
 2026-10-30 18:57:55,Bende,24.08,24.08,24.08,25.02,95,1014.0,2.15,179,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-10-30 22:50:27,Aba,23.77,23.77,23.77,24.68,95,1014.0,2.28,242,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-10-30 22:50:28,Umuahia,23.12,23.12,23.12,23.97,95,1014.0,3.13,231,100,0.0,0.0,Clouds,overcast clouds,10.0
+2026-10-30 22:50:29,Bende,23.44,23.44,23.44,24.32,95,1014.0,2.3,225,100,0.0,0.0,Clouds,overcast clouds,10.0
